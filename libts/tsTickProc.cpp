@@ -1,7 +1,6 @@
 #include "tsTickProc.h"
-#include "tsTickQueue.h"
 
-tsTickProc::tsTickProc(tsStore& store, int socketFD, int procID) : mStore(store), mSocket(tsSocketType_TCP), mProcID(procID)
+tsTickProc::tsTickProc(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID) : mStore(store), mSocket(tsSocketType_TCP), mProcID(procID), mTickQueue(tickFactory)
 {
     mSocket.setSocketDescriptor(socketFD);
     start();
@@ -13,21 +12,18 @@ tsTickProc::~tsTickProc()
 
 void* tsTickProc::run()
 {
-    bbUINT               qfullDelayMs = 32;
-    bool                 connected = true;
-    tsTickQueue          tickq;
+    bbUINT qfullDelayMs = 32;
+    bool connected = true;
     tsTickQueue::BufDesc qtail;
-    tsTickUnion          tickUnion;
 
     printf(__FUNCTION__ " %d: connection from %s\n", mProcID, mSocket.peerName().c_str());
 
     try
     {
-        while (!testCancel() && (connected || !tickq.empty()))
+        while (!testCancel() && (connected || !mTickQueue.empty()))
         {
-            tickq.backRaw(qtail);
-
-            if (qtail.sizeFirst == 0)
+            // - get pointers to free memory at queue tail
+            if (!mTickQueue.backRaw(qtail))
             {
                 printf(__FUNCTION__ " %d: receive queue full, wait %u ms\n", mProcID, qfullDelayMs);
                 tsThread::msleep(qfullDelayMs);
@@ -58,26 +54,26 @@ void* tsTickProc::run()
                     bytesReceived += bytesReceivedTail;
             }
 
-            tickq.pushRaw(bytesReceived); // commit received bytes into circular buffer
+            mTickQueue.pushRaw(bytesReceived); // commit received bytes into circular buffer
             mBytesReceived += bytesReceived;
 
             do
             {
-                int frontSize = tickq.front(&tickUnion);
+                char* pRawTick;
+                int frontSize = mTickQueue.frontRaw(&pRawTick);
                 if (frontSize <= 0)
                 {
                     if (frontSize == -2)
                     {
-                        printf(__FUNCTION__ " %d: receive queue deadlock detected, discarding %u bytes\n", mProcID, tickq.size());
-                        tickq.flush();
+                        printf(__FUNCTION__ " %d: receive queue deadlock detected, discarding %u bytes\n", mProcID, mTickQueue.size());
+                        mTickQueue.flush();
                     }
                     break;
                 }
+                Proc(pRawTick);
+                mTickQueue.pop(frontSize);
 
-                Proc(*tickUnion);
-                tickq.pop(frontSize);
-
-            } while(!tickq.empty());
+            } while(!mTickQueue.empty());
         }
     }
     catch(tsSocketException& e)
@@ -85,24 +81,34 @@ void* tsTickProc::run()
         printf(__FUNCTION__ " %d: exception '%s'\n", mProcID, e.what());
     }
 
-    printf(__FUNCTION__ " %d: shutting down connection from %s (%d bytes left in q)\n", mProcID, mSocket.peerName().c_str(), tickq.size());
+    printf(__FUNCTION__ " %d: shutting down connection from %s (%d bytes left in q)\n", mProcID, mSocket.peerName().c_str(), mTickQueue.size());
 
     return NULL;
 }
 
-bbERR tsTickProc::Proc(const tsTick& tick)
+void tsTickProc::Proc(const char* pRawTick)
 {
-    //std::cout << tick.str() << std::endl;
+    mStore.SaveTick(pRawTick);
+
+    tsTickUnion tickUnion;
+    mStore.tickFactory().unserialize(pRawTick, (tsTick*)&tickUnion);
+    Proc((const tsTick&)tickUnion);
+}
+
+void tsTickProc::Proc(const tsTick& tick)
+{
+    std::cout << mStore.tickFactory().str(tick) << std::endl;
+    return;
     if (tick.type() == tsTickType_Diag)
     {
         const tsTickDiag& diag = static_cast<const tsTickDiag&>(tick);
         tsTime current = tsTime::current();
 
-        std::cout << diag.str() << std::endl;
+        std::cout << mStore.tickFactory().str(diag) << std::endl;
         printf("diag %d latency %d ms (%s - %s) %d ms\n", tick.count(), 
                                                     (int)(((bbS64)current.timestamp() - (bbS64)tick.time())/1000000), 
                                                     current.str().c_str(), tsTime(tick.time()).str().c_str(),
                                                     (int)(((bbS64)diag.sendTime() - (bbS64)tick.time())/1000000));
     }
-    return bbEOK;
 }
+

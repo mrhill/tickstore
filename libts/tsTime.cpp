@@ -88,3 +88,11 @@ bbU64 tsTime::currentNs()
 
     return (bbU64)timebuffer.time*1000000000 + ((bbU32)timebuffer.millitm*1000000);
 }
+
+bbU64 tsTime::currentMs()
+{
+    struct __timeb64 timebuffer;
+    _ftime64_s( &timebuffer );
+
+    return (bbU64)timebuffer.time*1000 + (bbU32)timebuffer.millitm;
+}

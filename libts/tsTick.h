@@ -3,39 +3,31 @@
 
 #include "tsObjID.h"
 #include "tsTime.h"
-#include <string>
 #pragma warning(disable: 4355)
 
 enum tsTickType
 {
-    tsTickType_None = 0,
-    tsTickType_Diag,
-    tsTickType_Price,
-    tsTickType_Volume,
-    tsTickType_PriceVolume,
-    tsTickType_Bid,
-    tsTickType_Ask,
-    tsTickType_BidAsk,
-    tsTickTypeCount
+    tsTickType_None = 0,    //!< Indicating unitialized ticktype
+    tsTickType_Diag,        //!< Diagnostics tick, see tsTickDiag
+    tsTickTypeFirst         //!< First ID for domain specific tick types
 };
-
-class tsTickQueue;
 
 struct tsTick
 {
-    tsObjID     mObjID;
-    tsTickType  mType;
-    bbU32       mCount;
-    bbU64       mTime;
+    tsObjID     mObjID;     //!< Object ID
+    bbU16       mType;      //!< Tick type, see tsTickType
+    bbU32       mCount;     //!< Tick stream counter, intended for debug
+    bbU64       mTime;      //!< Tick timestamp, interpretation depends on tick type
 
-    static const int serializedPrefix = 2+2;
-    static const int serializedHeadSize = serializedPrefix+2+2+(4+8)+4+8;
-    static const int serializedSizeMax = serializedHeadSize + 128;
+    static const int MAXSIZE = 160; //!< Maximum byte size of tsTick derivated classes, see tsTickUnion
+    static const int SERIALIZEDPREFIX = 2+2;
+    static const int SERIALIZEDHEADSIZE = SERIALIZEDPREFIX+2+2+(4+8)+4+8;
+    static const int SERIALIZEDMAXSIZE = MAXSIZE - SERIALIZEDHEADSIZE;
 
-    tsTick(tsTickType type = tsTickType_None) : mType(type), mCount(0), mTime(0) {}
-    tsTick(const tsObjID& objID, tsTickType type = tsTickType_None) : mObjID(objID), mType(tsTickType_None), mCount(0), mTime(0) {}
+    tsTick(bbU16 type = tsTickType_None) : mType(type), mCount(0), mTime(0) {}
+    tsTick(const tsObjID& objID, bbU16 type = tsTickType_None) : mObjID(objID), mType(type), mCount(0), mTime(0) {}
 
-    inline tsTickType type() const { return mType; }
+    inline bbU16 type() const { return mType; }
 
     inline const tsObjID& objID() const { return mObjID; }
     inline void setObjID(const tsObjID& objID) { mObjID=objID; }
@@ -48,17 +40,10 @@ struct tsTick
     inline void setTime(const tsTime& time) { mTime = time.timestamp(); }
 
     std::string str() const;
+    int serializeHead(char* pBuf, int tailSize) const;
+    int unserializeHead(const char* pBuf);
 
-    int serializedSize() const { return tsTick::serializedTailSize(*this) + tsTick::serializedHeadSize; }
-    void serialize(char* pBuf) const;
-    static int unserialize(char* pBuf, tsTick* pTick);
-
-protected:
     friend class tsTickQueue;
-
-    static int serializedTailSize(const tsTick& tick);
-    void serializeHead(char* pBuf, int tail) const;
-    static void unserializeHead(char* pBuf, tsTick* pTick);
 };
 
 struct tsTickDiag : tsTick
@@ -76,70 +61,35 @@ struct tsTickDiag : tsTick
     inline void setSendTime(const tsTime& time) { mSendTime = time.timestamp(); }
 
     static const int tailSize = 8;
-    void serialize(char* pBuf) const;
-    void unserialize(const char* pBuf);
-    std::string str_tail() const;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
 };
 
-struct tsTickPrice : tsTick
-{
-    double mPrice;
-    bbU32  mOpt;
-
-    tsTickPrice(const tsObjID& objID, double price, bbU32 opt = 0) :
-        tsTick(objID, tsTickType_Price),
-        mPrice(price),
-        mOpt(opt)
-    {
-    }
-
-    inline void setPrice(double price) { mPrice = price; }
-    inline double price() const { return mPrice; }
-
-    static const int tailSize = 12;
-    void serialize(char* pBuf) const {}
-    void unserialize(const char* pBuf) {}
-};
-
-struct tsTickVolume : tsTick
-{
-    bbU64  mVolume;
-
-    tsTickVolume(const tsObjID& objID, bbU64 volume) :
-        tsTick(objID, tsTickType_Volume),
-        mVolume(volume)
-    {
-    }
-
-    static const int tailSize = 8;
-    void serialize(char* pBuf) const {}
-    void unserialize(const char* pBuf) {}
-};
-
-struct tsTickPriceVolume : tsTick
-{
-    double mPrice;
-    bbU64  mVolume;
-
-    tsTickPriceVolume(const tsObjID& objID, double price, bbU64 volume, bbU64 time=0) :
-        tsTick(objID, tsTickType_PriceVolume),
-        mPrice(price),
-        mVolume(volume)
-    {
-    }
-
-    static const int tailSize = 16;
-    void serialize(char* pBuf) const {}
-    void unserialize(const char* pBuf) {}
-};
-
+/** Place holder container to unserialize tsTick derived classes. */
 union tsTickUnion
 {
-    bbU8 mTick[sizeof(tsTick)];
-    bbU8 mPrice[sizeof(tsTickPrice)];
-    bbU8 mVolume[sizeof(tsTickVolume)];
-    bbU8 mPriceVolume[sizeof(tsTickPriceVolume)];
+    bbU8 mTick[tsTick::MAXSIZE];
+
+    operator const tsTick&() const { return *(const tsTick*)this; }
+    operator tsTick&() { return *(tsTick*)this; }
     operator const tsTick*() const { return (const tsTick*)this; }
+    operator tsTick*() { return (tsTick*)this; }
+};
+
+class tsTickFactory
+{
+protected:
+    virtual int  serializedTailSize(const tsTick& tick) const;
+    virtual void serializeTail(const tsTick* pTick, char* pBuf) const;
+    virtual void unserializeTail(const char* pBuf, tsTick* pTick) const;
+    virtual std::string strTail(const tsTick* pTick) const;
+public:
+    int         serializedSize(const tsTick& tick) const { return serializedTailSize(tick) + tsTick::SERIALIZEDHEADSIZE; }
+    void        serialize(const tsTick& tick, char* pBuf) const;
+    int         unserialize(const char* pBuf, tsTick* pTick) const;
+    std::string str(const tsTick& tick) const;
 };
 
 #endif
+

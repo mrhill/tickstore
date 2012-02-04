@@ -277,6 +277,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\tsTickFinance.cpp"
+				>
+			</File>
+			<File
 				RelativePath="tsTickProc.cpp"
 				>
 				<FileConfiguration
@@ -373,6 +377,10 @@
 			</File>
 			<File
 				RelativePath="tsTick.h"
+				>
+			</File>
+			<File
+				RelativePath=".\tsTickFinance.h"
 				>
 			</File>
 			<File

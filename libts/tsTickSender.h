@@ -12,22 +12,22 @@
 
 class tsTickSender : protected tsThread
 {
-    bbU32       mTickCount;
-    tsTickQueue mTickQueue;
+    bbU32       mTickCount;             //!< Tick count for this sender
+    tsTickQueue mTickQueue;             //!< Tick send queue
     tsSemaphore mTickQueueSema;
-    tsMutex     mTickQueueWriteMutex;
+    tsMutex     mTickQueueWriteMutex;   //!< Mutex to protect write access to mTickQueue from multiple threads
     tsSocket    mSocket;
     int         mLogLevel;
     int         mPort;
     std::string mHostName;
 
-    void* run();
+    virtual void* run();
     void tierDownConnection();
     void sendUnprotected(tsTick& tick);
     void sendDiagTick();
 
 public:
-    tsTickSender(const char* pHostAdr, int port = 2227);
+    tsTickSender(tsTickFactory& tickFactory, const char* pHostAdr, int port = 2227);
     ~tsTickSender();
 
     void send(tsTick& tick);

@@ -6,34 +6,24 @@
 #include "tsSocket.h"
 #include "tsStore.h"
 #include "tsThread.h"
+#include "tsTickQueue.h"
 
-/** Tick Processor.
-
-    Data Storage, ticks
-
-    per exID:
-    <objID> | <tickstream>
-
-    Data Storage, header
-
-    per exID:
-    <objID> | <header>
-
-    
-*/
+/** Tick Processor. */
 class tsTickProc : tsThread
 {
-    tsStore& mStore;
-    tsSocket mSocket;
-    int      mProcID;
-    bbU64    mBytesReceived;
+    tsStore&    mStore;
+    tsSocket    mSocket;
+    int         mProcID;
+    bbU64       mBytesReceived;
+    tsTickQueue mTickQueue;
 
     virtual void* run();
 public:
-    tsTickProc(tsStore& store, int socketFD, int procID);
+    tsTickProc(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID);
     ~tsTickProc();
 
-    bbERR Proc(const tsTick& tick);
+    virtual void Proc(const char* pRawTick);
+    virtual void Proc(const tsTick& tick);
 };
 
 #endif

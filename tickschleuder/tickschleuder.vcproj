@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="tickstore"
-	ProjectGUID="{8E171699-958E-4665-97EB-5E63466E510D}"
-	RootNamespace="tickstore"
+	Name="tickschleuder"
+	ProjectGUID="{3497C208-4189-4B55-9148-44809D61202B}"
+	RootNamespace="tickschleuder"
 	TargetFrameworkVersion="0"
 	>
 	<Platforms>
@@ -39,7 +39,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/tsstore.tlb"
+				TypeLibraryName=".\Debug/tickschleuder.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -50,7 +50,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/tsstore.pch"
+				PrecompiledHeaderFile=".\Debug/tickschleuder.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
 				ProgramDataBaseFileName=".\Debug/"
@@ -72,11 +72,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="pthreadVSE2.lib"
-				OutputFile=".\Debug/tickstore.exe"
+				OutputFile=".\Debug/tickschleuder.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/tsstore.pdb"
+				ProgramDatabaseFile=".\Debug/tickschleuder.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -94,7 +94,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/tsstore.bsc"
+				OutputFile=".\Debug/tickschleuder.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -130,7 +130,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/tsstore.tlb"
+				TypeLibraryName=".\Release/tickschleuder.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -142,7 +142,7 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/tsstore.pch"
+				PrecompiledHeaderFile=".\Release/tickschleuder.pch"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"
 				ProgramDataBaseFileName=".\Release/"
@@ -163,10 +163,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="pthreadVSE2.lib"
-				OutputFile=".\Release/tickstore.exe"
+				OutputFile=".\Release/tickschleuder.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/tsstore.pdb"
+				ProgramDatabaseFile=".\Release/tickschleuder.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -184,7 +184,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/tsstore.bsc"
+				OutputFile=".\Release/tickschleuder.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -201,7 +201,7 @@
 	</References>
 	<Files>
 		<File
-			RelativePath=".\tstore.cpp"
+			RelativePath=".\tickschleuder.cpp"
 			>
 		</File>
 	</Files>

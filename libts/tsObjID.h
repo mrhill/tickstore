@@ -2,6 +2,7 @@
 #define tsOBJID_H
 
 #include <babel/defs.h>
+#include <string>
 #include "tsdef.h"
 
 class tsObjID
@@ -22,6 +23,8 @@ public:
     {
         return (mExchangeID <= other.mExchangeID) && (mSymbolID < other.mSymbolID);
     }
+
+    std::string str() const;
 };
 
 #endif

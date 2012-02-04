@@ -3,13 +3,18 @@
 
 #include "tsTick.h"
 
+/** Tick Queue.
+    Provides mutex-less but thread-save mechanism to pass serialized tsTick's between
+    one producer and one consumer thread.
+*/
 class tsTickQueue
 {
+    tsTickFactory& mTickFactory;
     char*   mpBuf;
     bbUINT  mRd;
     bbUINT  mWr;
     bbUINT  mSize;
-    char    mWrapBuf[tsTick::serializedSizeMax];
+    char    mWrapBuf[tsTick::SERIALIZEDMAXSIZE];
 
 public:
     struct BufDesc
@@ -20,7 +25,7 @@ public:
         bbUINT sizeSecond;
     };
 
-    tsTickQueue(bbUINT bytesize = 8192);
+    tsTickQueue(tsTickFactory& tickFactory, bbUINT bufsize = 8192);
     ~tsTickQueue();
 
     /** Test if queue is empty.
@@ -42,15 +47,16 @@ public:
         @param desc Buffer tail descriptor, will be filled on success
         @return true on success if free bytes available, false if queue full
     */
-    void backRaw(BufDesc& desc);
+    bool backRaw(BufDesc& desc);
 
     /** Commit raw bytes to end of queue.
+        To be used in combination with backRaw(). Number of bytes pushed can be incomplete ticks.
         @param size Number of bytes to commit
     */
     void pushRaw(bbUINT size);
 
     /** Return byte size of raw tick at front of queue.
-        @return Size in bytes or <=0 if no or incomplete data
+        @return Size in bytes, -1 if no or incomplete data, -2 if malformed data detected
     */
     int  frontSize();
 
@@ -85,7 +91,8 @@ public:
     {
         mRd = mWr;
     }
-friend class tsTickProc;
+
+    friend class tsTickProc;
 };
 
 #endif

@@ -4,12 +4,12 @@
 #include <stdexcept>
 #include <streamprintf.h>
 
-tsTickQueue::tsTickQueue(bbUINT size) : mpBuf(NULL), mSize(size), mRd(0), mWr(0)
+tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, bbUINT bufsize) : mTickFactory(tickFactory), mpBuf(NULL), mSize(bufsize), mRd(0), mWr(0)
 {
-    if (!bbIsPwr2(size))
-        throw std::runtime_error(strprintf(__FUNCTION__ ": queue size %d is not power of 2\n", size));
+    if (!bbIsPwr2(bufsize))
+        throw std::runtime_error(strprintf(__FUNCTION__ ": queue buffer size %d is not power of 2\n", bufsize));
 
-    mpBuf = new char[size];
+    mpBuf = new char[bufsize];
 }
 
 tsTickQueue::~tsTickQueue()
@@ -22,21 +22,21 @@ bool tsTickQueue::push(const tsTick& tick)
     bbUINT rd = mRd;
     bbUINT wr = mWr;
     bbUINT left = mSize - ((wr-rd)&(mSize-1));
-    bbUINT const tickSize = tick.serializedSize();
+    bbUINT const tickSize = mTickFactory.serializedSize(tick);
 
     if (tickSize >= left)
         return false;
 
     if ((mWr+tickSize) <= mSize)
     {
-        tick.serialize(mpBuf + wr);
+        mTickFactory.serialize(tick, mpBuf + wr);
     }
     else
     {
         bbUINT firsPart = mSize-wr;
 
-        char wrapBuf[tsTick::serializedSizeMax];
-        tick.serialize(wrapBuf);
+        char wrapBuf[tsTick::SERIALIZEDMAXSIZE];
+        mTickFactory.serialize(tick, wrapBuf);
 
         memcpy(mpBuf + wr, wrapBuf, firsPart);
         memcpy(mpBuf, wrapBuf + firsPart, tickSize-firsPart);
@@ -54,7 +54,7 @@ void tsTickQueue::pushRaw(bbUINT tickSize)
     mWr = (wr + tickSize) & (mSize-1);
 }
 
-void tsTickQueue::backRaw(BufDesc& desc)
+bool tsTickQueue::backRaw(BufDesc& desc)
 {
     bbUINT rd = mRd; // copy to local to prevent race conditions
     bbUINT wr = mWr;
@@ -67,8 +67,10 @@ void tsTickQueue::backRaw(BufDesc& desc)
         desc.sizeFirst  = 0;
         desc.pSecond    = NULL;
         desc.sizeSecond = 0;
+        return false;
     }
-    else if (rd==0)
+
+    if (rd==0)
     {
         // |---|.......|
         // rd  wr
@@ -104,6 +106,8 @@ void tsTickQueue::backRaw(BufDesc& desc)
         desc.pSecond    = mpBuf;
         desc.sizeSecond = rd - 1;
     }
+
+    return true;
 }
 
 int tsTickQueue::frontSize()
@@ -112,25 +116,25 @@ int tsTickQueue::frontSize()
     bbUINT wr = mWr;
     bbUINT filled = (wr-rd) & (mSize-1);
 
-    if (filled < tsTick::serializedHeadSize)
+    if (filled < tsTick::SERIALIZEDHEADSIZE)
         return -1;
 
     bbUINT tickSize;
 
-    if ((rd + tsTick::serializedPrefix) <= mSize)
+    if ((rd + tsTick::SERIALIZEDPREFIX) <= mSize)
     {
-        tickSize = tsTick::unserialize(mpBuf+rd, NULL);
+        tickSize = mTickFactory.unserialize(mpBuf+rd, NULL);
     }
     else
     {
         bbUINT firsPart = mSize-rd;
-        char wrapBuf[tsTick::serializedHeadSize];
+        char wrapBuf[tsTick::SERIALIZEDHEADSIZE];
         memcpy(wrapBuf, mpBuf + rd, firsPart);
-        memcpy(wrapBuf+firsPart, mpBuf, tsTick::serializedPrefix-firsPart);
-        tickSize = tsTick::unserialize(wrapBuf, NULL);
+        memcpy(wrapBuf+firsPart, mpBuf, tsTick::SERIALIZEDPREFIX-firsPart);
+        tickSize = mTickFactory.unserialize(wrapBuf, NULL);
     }
 
-    if ((tickSize > tsTick::serializedSizeMax) || (tickSize < tsTick::serializedHeadSize))
+    if ((tickSize > tsTick::SERIALIZEDMAXSIZE) || (tickSize < tsTick::SERIALIZEDHEADSIZE))
     {
         printf(__FUNCTION__ ": Warning, bad ticksize %d\n", tickSize);
         return -2;
@@ -153,16 +157,16 @@ int tsTickQueue::front(tsTickUnion* pTick)
     {
         if ((rd+tickSize) <= mSize)
         {
-            tsTick::unserialize(mpBuf+rd, (tsTick*)pTick);
+            mTickFactory.unserialize(mpBuf+rd, (tsTick*)pTick);
         }
         else
         {
             bbUINT firsPart = mSize-rd;
-            char wrapBuf[tsTick::serializedSizeMax];
+            char wrapBuf[tsTick::SERIALIZEDMAXSIZE];
             memcpy(wrapBuf, mpBuf + rd, firsPart);
             memcpy(wrapBuf+firsPart, mpBuf, tickSize-firsPart);
 
-            tsTick::unserialize(wrapBuf, (tsTick*)pTick);
+            mTickFactory.unserialize(wrapBuf, (tsTick*)pTick);
         }
     }
 

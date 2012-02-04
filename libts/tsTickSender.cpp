@@ -8,7 +8,7 @@
 
 void tsTickSender::tierDownConnection()
 {
-    std::cout << __FUNCTION__ ": tiering down connection\n";
+    printf(__FUNCTION__ ": tiering down connection\n");
     mSocket.close();
 }
 
@@ -22,11 +22,11 @@ void* tsTickSender::run()
         {
         case tsSocketState_Unconnected:
             try {
-                std::cout << strprintf(__FUNCTION__ ": connecting %s:%d...\n", mHostName, mPort);
+                printf(__FUNCTION__ ": connecting %s:%d...\n", mHostName.c_str(), mPort);
                 mSocket.connect(mHostName.c_str(), mPort);
                 retryWait = 500;
             } catch(tsSocketException& e) {
-                std::cout << e.what();
+                printf(e.what());
 
                 tsThread::msleep(retryWait);
                 if (retryWait < 4000)
@@ -45,8 +45,8 @@ void* tsTickSender::run()
                     if (bbLD16LE(pTickSerialized) == tsTickType_Diag)
                     {
                         bbU64 t = tsTime::currentNs();
-                        bbST32LE(pTickSerialized+tsTick::serializedHeadSize, (bbU32)t);
-                        bbST32LE(pTickSerialized+tsTick::serializedHeadSize+4, (bbU32)(t>>32));
+                        bbST32LE(pTickSerialized+tsTick::SERIALIZEDHEADSIZE, (bbU32)t);
+                        bbST32LE(pTickSerialized+tsTick::SERIALIZEDHEADSIZE+4, (bbU32)(t>>32));
 
                         /*if (mLogLevel)
                         {
@@ -79,8 +79,8 @@ void* tsTickSender::run()
     return NULL;
 }
 
-tsTickSender::tsTickSender(const char* pHostName, int port)
-  : mTickCount(0), mLogLevel(2), mSocket(tsSocketType_TCP), mTickQueue(), mHostName(pHostName), mPort(port)
+tsTickSender::tsTickSender(tsTickFactory& tickFactory, const char* pHostName, int port)
+  : mTickCount(0), mLogLevel(2), mSocket(tsSocketType_TCP), mTickQueue(tickFactory), mHostName(pHostName), mPort(port)
 {
     tsThread::start();
 }
@@ -98,7 +98,7 @@ void tsTickSender::sendUnprotected(tsTick& tick)
     int retry = 0;
     while (!mTickQueue.push(tick))
     {
-        std::cerr << __FUNCTION__ ": queue full, retry " << (++retry) << std::endl;
+        printf(__FUNCTION__ ": queue full, retry %d\n", ++retry);
         tsThread::msleep(100);
     }
 
@@ -117,9 +117,10 @@ void tsTickSender::send(tsTick& tick)
 {
     mTickQueueWriteMutex.lock();
 
-    if (!(mTickCount & 63))
-        sendDiagTick();
+    //if (!(mTickCount & 63))
+    //    sendDiagTick();
     sendUnprotected(tick);
 
     mTickQueueWriteMutex.unlock();
 }
+

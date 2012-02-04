@@ -38,6 +38,7 @@ public:
     std::string str() const;
 
     static bbU64 currentNs();
+    static bbU64 currentMs();
     static tsTime current() { return tsTime(currentNs()); }
 };
 

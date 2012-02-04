@@ -1,13 +1,12 @@
-#include "tsStoreMemory.h"
 #include "tsTickSender.h"
-#include "tsTick.h"
+#include "tsTickFinance.h"
 #include <memory>
 #include <iostream>
 #include <stdexcept>
 
 int main(int argc, char** argv)
 {
-    std::auto_ptr<tsStore> pTickerStore(tsStore::Create(tsStoreBackend_Memory));
+    tsTickFactoryFinance factory;
 
     bbU64 sym = 0xDEADDEADUL;
     sym = (sym<<32) | 0xF00DF00DUL;
@@ -20,7 +19,7 @@ int main(int argc, char** argv)
 
     try
     {
-        tsTickSender sender("localhost");
+        tsTickSender sender(factory, "localhost");
 
         for (int i=0; i<1000; i++)
         {

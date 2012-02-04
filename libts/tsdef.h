@@ -2,6 +2,7 @@
 #define tsDEF_H
 
 #include <babel/defs.h>
+#include <vector>
 
 struct tsRawTick
 {
@@ -44,6 +45,15 @@ enum tsType
 
 extern const bbU8 tsgTypeSize[tsTypeCount];
 extern const bbU8 tsgTypeAlign[tsTypeCount];
+
+template <class T> struct tsVecManagedPtr : public std::vector<T*>
+{
+    ~tsVecManagedPtr()
+    {
+        for(const_reverse_iterator it = rbegin(); it!=rend(); it++)
+            delete *it;
+    }
+};
 
 #endif
 
