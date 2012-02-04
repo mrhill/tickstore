@@ -26,12 +26,12 @@ tickTypes = [
 ]
 
 typeMap = {
-    'bbU8'  : [1, 0, '%u',  'B'],
-    'bbU16' : [2, 0, '%u',  'B'],
-    'bbU32' : [4, 0, '%u',  'L'],
-    'bbU64' : [8, 0, '%I64u', 'Q'],
-    'float' : [4, 0, '%g',  'f'],
-    'double': [8, 0, '%lg', 'd'],
+    'bbU8'  : [1, 0, '%u'],
+    'bbU16' : [2, 0, '%u'],
+    'bbU32' : [4, 0, '%u'],
+    'bbU64' : [8, 0, '%I64u'],
+    'float' : [4, 0, '%g'],
+    'double': [8, 0, '%lg'],
 }
 
 def getAttrList(str):
@@ -61,11 +61,11 @@ $accessors
 tickClassImplTempl = """
 void tsTick${name}::serializeTail(char* pBuf) const
 {
-}
+${serializeTailUnion}${serializeTail}}
 
 void tsTick${name}::unserializeTail(const char* pBuf)
 {
-}
+${serializeTailUnion}${unserializeHead}}
 
 std::string tsTick${name}::strTail() const
 {
@@ -119,11 +119,34 @@ for tickType in tickTypes:
     factoryUnserializeTail += "    case tsTickType_%s: static_cast<tsTick%s*>(pTick)->unserializeTail(pBuf); break;\n" % (name, name)
     factoryStrTail += "    case tsTickType_%s: return static_cast<const tsTick%s*>(pTick)->strTail();\n" % (name, name)
 
-    classImplDict = dict(name=name, attrFmt='', attrVar='')
+    classImplDict = dict(name=name, attrFmt='', attrVar='', serializeTail='', serializeTailUnion='', unserializeHead='')
     for (attrType, attrName) in scheme:
         attrMemberName = 'm'+attrName.capitalize()
-        classImplDict['attrFmt'] += ",%s=%s" % (typeMap[attrType][2], attrName)
+        classImplDict['attrFmt'] += ",%s=%s" % (attrName, typeMap[attrType][2])
         classImplDict['attrVar'] += ", %s" % (attrMemberName)
+
+        if attrType == 'double' or attrType == 'float':
+            classImplDict['serializeTailUnion'] = "    union { bbU32 u32; float f32; bbU64 u64; double f64; };\n\n"
+
+        if attrType == 'bbU8':
+            classImplDict['serializeTail']   += "    *pBuf++ = %s;\n" % (attrMemberName)
+            classImplDict['unserializeHead'] += "    %s = *pBuf++\n" % (attrMemberName)
+        if attrType == 'bbU16':
+            classImplDict['serializeTail']   += "    bbST16LE(pBuf, %s); pBuf+=2;\n" % (attrMemberName)
+            classImplDict['unserializeHead'] += "    %s = bbLD16LE(pBuf); pBuf+=2;\n" % (attrMemberName)
+        if attrType == 'bbU32':
+            classImplDict['serializeTail']   += "    bbST32LE(pBuf, %s); pBuf+=4;\n" % (attrMemberName)
+            classImplDict['unserializeHead'] += "    %s = bbLD32LE(pBuf); pBuf+=4;\n" % (attrMemberName)
+        if attrType == 'bbU64':
+            classImplDict['serializeTail']   += "    bbST64LE(pBuf, %s); pBuf+=8;\n" % (attrMemberName)
+            classImplDict['unserializeHead'] += "    %s = bbLD64LE(pBuf); pBuf+=8;\n" % (attrMemberName)
+        elif attrType == 'float':
+            classImplDict['serializeTail']   += "    f32 = %s; bbST32LE(pBuf, u32); pBuf+=4;\n" % (attrMemberName)
+            classImplDict['unserializeHead'] += "    u32 = bbLD32LE(pBuf); pBuf+=4; %s = f32;\n" % (attrMemberName)
+        elif attrType == 'double':
+            classImplDict['serializeTail']   += "    f64 = %s; bbST64LE(pBuf, u64); pBuf+=8;\n" % (attrMemberName)
+            classImplDict['unserializeHead'] += "    u64 = bbLD64LE(pBuf); pBuf+=8; %s = f64;\n" % (attrMemberName)
+
     tickClassImpl += Template(tickClassImplTempl).substitute(classImplDict)
     
 

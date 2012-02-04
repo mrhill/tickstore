@@ -31,6 +31,7 @@ class TestSendThread : public tsThread
             {
                 sender << tick << priceTick;
                 priceTick.setPrice(i);
+                priceTick.setVolume(1<<(i&63));
             }
         }
         catch(std::exception& e)

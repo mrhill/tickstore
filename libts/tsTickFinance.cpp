@@ -59,48 +59,70 @@ std::string tsTickFactoryFinance::strTail(const tsTick* pTick) const
 
 void tsTickPrice::serializeTail(char* pBuf) const
 {
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    f64 = mPrice; bbST64LE(pBuf, u64); pBuf+=8;
+    bbST32LE(pBuf, mOpt); pBuf+=4;
 }
 
 void tsTickPrice::unserializeTail(const char* pBuf)
 {
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    u64 = bbLD64LE(pBuf); pBuf+=8; mPrice = f64;
+    mOpt = bbLD32LE(pBuf); pBuf+=4;
 }
 
 std::string tsTickPrice::strTail() const
 {
     bbStrBuf str;
-    str.Printf(bbT(",%lg=price,%u=opt"), mPrice, mOpt);
+    str.Printf(bbT(",price=%lg,opt=%u"), mPrice, mOpt);
     return std::string(str.GetPtr());
 }
 
 
 void tsTickVolume::serializeTail(char* pBuf) const
 {
+    bbST64LE(pBuf, mVolume); pBuf+=8;
+    bbST32LE(pBuf, mOpt); pBuf+=4;
 }
 
 void tsTickVolume::unserializeTail(const char* pBuf)
 {
+    mVolume = bbLD64LE(pBuf); pBuf+=8;
+    mOpt = bbLD32LE(pBuf); pBuf+=4;
 }
 
 std::string tsTickVolume::strTail() const
 {
     bbStrBuf str;
-    str.Printf(bbT(",%I64u=volume,%u=opt"), mVolume, mOpt);
+    str.Printf(bbT(",volume=%I64u,opt=%u"), mVolume, mOpt);
     return std::string(str.GetPtr());
 }
 
 
 void tsTickPriceVolume::serializeTail(char* pBuf) const
 {
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    f64 = mPrice; bbST64LE(pBuf, u64); pBuf+=8;
+    bbST64LE(pBuf, mVolume); pBuf+=8;
+    bbST32LE(pBuf, mOpt); pBuf+=4;
 }
 
 void tsTickPriceVolume::unserializeTail(const char* pBuf)
 {
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    u64 = bbLD64LE(pBuf); pBuf+=8; mPrice = f64;
+    mVolume = bbLD64LE(pBuf); pBuf+=8;
+    mOpt = bbLD32LE(pBuf); pBuf+=4;
 }
 
 std::string tsTickPriceVolume::strTail() const
 {
     bbStrBuf str;
-    str.Printf(bbT(",%lg=price,%I64u=volume,%u=opt"), mPrice, mVolume, mOpt);
+    str.Printf(bbT(",price=%lg,volume=%I64u,opt=%u"), mPrice, mVolume, mOpt);
     return std::string(str.GetPtr());
 }
 
