@@ -73,8 +73,6 @@ union tsTickUnion
 
     operator const tsTick&() const { return *(const tsTick*)this; }
     operator tsTick&() { return *(tsTick*)this; }
-    operator const tsTick*() const { return (const tsTick*)this; }
-    operator tsTick*() { return (tsTick*)this; }
 };
 
 class tsTickFactory

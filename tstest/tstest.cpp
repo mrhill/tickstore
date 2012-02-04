@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 
     std::cout << tsTime::current().str() << std::endl;
 
-    tsTickPrice priceTick(objID, 23.42);
+    tsTickPrice priceTick(objID, 23.42, 0);
 
     try
     {

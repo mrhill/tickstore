@@ -101,7 +101,7 @@ int tsTickFactory::unserialize(const char* pBuf, tsTick* pTick) const
 
 std::string tsTickFactory::str(const tsTick& tick) const
 {
-    return tick.str() + ',' + strTail(&tick);
+    return tick.str() + strTail(&tick);
 }
 
 void tsTickDiag::serializeTail(char* pBuf) const
@@ -119,6 +119,6 @@ void tsTickDiag::unserializeTail(const char* pBuf)
 std::string tsTickDiag::strTail() const
 {
     tsTime time(mSendTime);
-    return "sendtime=" + time.str();
+    return ",sendtime=" + time.str();
 }
 

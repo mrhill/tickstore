@@ -91,8 +91,8 @@ void tsTickProc::Proc(const char* pRawTick)
     mStore.SaveTick(pRawTick);
 
     tsTickUnion tickUnion;
-    mStore.tickFactory().unserialize(pRawTick, (tsTick*)&tickUnion);
-    Proc((const tsTick&)tickUnion);
+    mStore.tickFactory().unserialize(pRawTick, &static_cast<tsTick&>(tickUnion));
+    Proc(static_cast<const tsTick&>(tickUnion));
 }
 
 void tsTickProc::Proc(const tsTick& tick)
