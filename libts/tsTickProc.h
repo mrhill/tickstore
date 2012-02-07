@@ -15,6 +15,7 @@ class tsTickProc : tsThread
     tsSocket    mSocket;
     int         mProcID;
     bbU64       mBytesReceived;
+    bbU64       mTicksReceived;
     tsTickQueue mTickQueue;
 
     virtual void* run();

@@ -1,5 +1,5 @@
 #include "tsStoreMemory.h"
-#include "tsTickProc.h"
+#include "tsTickProcSchleuder.h"
 #include "tsThread.h"
 #include "tsTickSender.h"
 #include "tsTickFinance.h"
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
         while (true)
         {
             int newSocket = listenSocket.accept();
-            tickProcessors.push_back(new tsTickProc(factory, *pTickerStore, newSocket, ++procID));
+            tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID));
         }
     }
     catch(std::exception& e)

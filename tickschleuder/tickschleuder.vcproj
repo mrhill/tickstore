@@ -204,6 +204,14 @@
 			RelativePath=".\tickschleuder.cpp"
 			>
 		</File>
+		<File
+			RelativePath=".\tsTickProcSchleuder.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\tsTickProcSchleuder.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

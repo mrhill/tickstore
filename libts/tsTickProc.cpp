@@ -97,8 +97,8 @@ void tsTickProc::Proc(const char* pRawTick)
 
 void tsTickProc::Proc(const tsTick& tick)
 {
-    std::cout << mStore.tickFactory().str(tick) << std::endl;
-    return;
+    //std::cout << mStore.tickFactory().str(tick) << std::endl;
+
     if (tick.type() == tsTickType_Diag)
     {
         const tsTickDiag& diag = static_cast<const tsTickDiag&>(tick);

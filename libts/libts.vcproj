@@ -194,6 +194,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\tsMon.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\tsMutex.cpp"
 				>
 			</File>
@@ -341,6 +345,10 @@
 			</File>
 			<File
 				RelativePath="tsHeader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\tsMon.h"
 				>
 			</File>
 			<File

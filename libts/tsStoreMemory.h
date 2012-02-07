@@ -16,6 +16,7 @@ class tsStoreMemory : public tsStore
 
 public:
     tsStoreMemory(tsTickFactory& tickFactory) : tsStore(tickFactory) {}
+
     virtual void SaveTick(const char* pRawTick);
 
     virtual bbERR GetHeader(const tsObjID& objID, tsHeader& header);
