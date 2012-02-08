@@ -3,6 +3,7 @@
 
 #include <babel/defs.h>
 #include <vector>
+#include <string>
 
 struct tsRawTick
 {
@@ -54,6 +55,8 @@ template <class T> struct tsVecManagedPtr : public std::vector<T*>
             delete *it;
     }
 };
+
+std::string strprintf(const char* fmt, ...);
 
 #endif
 

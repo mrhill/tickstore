@@ -2,9 +2,9 @@
 #define tsSOCKET_H
 
 #include <babel/defs.h>
+#include "tsdef.h"
 #include <string>
 #include <stdexcept>
-#include <streamprintf.h>
 
 enum tsSocketType
 {

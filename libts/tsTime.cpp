@@ -1,6 +1,6 @@
 #include <sys/timeb.h>
 #include <time.h>
-#include <streamprintf.h>
+#include "tsdef.h"
 #include "tsTime.h"
 
 tsTime::tsTime(int year, int month, int day, int h, int m, int s, int ns)

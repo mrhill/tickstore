@@ -1,4 +1,5 @@
 #include "tsTickProc.h"
+#include <iostream>
 
 tsTickProc::tsTickProc(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID) : mStore(store), mSocket(tsSocketType_TCP), mProcID(procID), mTickQueue(tickFactory)
 {

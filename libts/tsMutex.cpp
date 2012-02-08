@@ -1,8 +1,8 @@
 #include "tsMutex.h"
+#include "tsdef.h"
 #include <iostream>
 #include <string.h>
 #include <windows.h>
-#include <streamprintf.h>
 
 #define PTW32_TIMESPEC_TO_FILETIME_OFFSET \
 	  ( ((LONGLONG) 27111902 << 32) + (LONGLONG) 3577643008 )

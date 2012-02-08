@@ -2,7 +2,6 @@
 #include "babel/fixmath.h"
 #include <string.h>
 #include <stdexcept>
-#include <streamprintf.h>
 
 tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, bbUINT bufsize) : mTickFactory(tickFactory), mpBuf(NULL), mSize(bufsize), mRd(0), mWr(0)
 {

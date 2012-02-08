@@ -1,7 +1,7 @@
+#include "tsdef.h"
 #include "tsSemaphore.h"
 #include <string.h>
 #include <windows.h>
-#include <streamprintf.h>
 
 extern void getTimeoutSpec(struct timespec* pSpec, int timeout);
 

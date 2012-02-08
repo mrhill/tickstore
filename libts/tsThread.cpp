@@ -1,6 +1,6 @@
 #include "tsThread.h"
+#include "tsdef.h"
 #include <string.h>
-#include <streamprintf.h>
 #include <iostream>
 
 static void* tsThread_run(void* arg)

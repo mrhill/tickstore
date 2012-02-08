@@ -1,6 +1,5 @@
 #include "tsTick.h"
 #include <stdexcept>
-#include <streamprintf.h>
 
 std::string tsObjID::str() const
 {

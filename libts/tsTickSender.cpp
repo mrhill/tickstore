@@ -1,10 +1,8 @@
 #include "tsTickSender.h"
 #include <stdexcept>
-#include <streamprintf.h>
 #include <iostream>
 #include <stdexcept>
 #include <sys/timeb.h>
-#include <streamprintf.h>
 
 void tsTickSender::tierDownConnection()
 {
