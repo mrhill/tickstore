@@ -49,18 +49,27 @@ struct tsTick
 struct tsTickDiag : tsTick
 {
     bbU64 mSendTime;
+    bbU64 mReceiveTime;
+    bbU64 mStoreTime;
 
     tsTickDiag(const tsObjID& objID) :
         tsTick(objID, tsTickType_Diag),
-        mSendTime(0)
+        mSendTime(0),
+        mReceiveTime(0),
+        mStoreTime(0)
     {
     }
 
     inline bbU64 sendTime() const { return mSendTime; }
     inline void setSendTime(bbU64 timestamp) { mSendTime = timestamp; }
-    inline void setSendTime(const tsTime& time) { mSendTime = time.timestamp(); }
 
-    static const int tailSize = 8;
+    inline bbU64 receiveTime() const { return mReceiveTime; }
+    inline void setReceiveTime(bbU64 timestamp) { mReceiveTime = timestamp; }
+
+    inline bbU64 storeTime() const { return mStoreTime; }
+    inline void setStoreTime(bbU64 timestamp) { mStoreTime = timestamp; }
+
+    static const int tailSize = 24;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;

@@ -10,9 +10,15 @@ tsStoreFile::tsStoreFile(tsTickFactory& tickFactory, const char* pFilePath)
         throw std::runtime_error(strprintf(__FUNCTION__ ": Error %d opening file '%s'\n", errno, pFilePath));
 }
 
+tsStoreFile::~tsStoreFile()
+{
+    if (mhFile)
+        fclose(mhFile);
+}
+
 void tsStoreFile::SaveTick(const char* pRawTick, bbUINT tickSize)
 {
-    if (fwrite(pRawTick, tickSize, 1, mhFile) != tickSize)
+    if (fwrite(pRawTick, 1, tickSize, mhFile) != tickSize)
         printf("%s: error writing %d bytes to '%s'\n", __FUNCTION__, tickSize, mpFilePath);
 
     tsTickUnion tickUnion;

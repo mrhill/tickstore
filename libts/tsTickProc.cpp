@@ -89,27 +89,27 @@ void* tsTickProc::run()
 
 void tsTickProc::Proc(const char* pRawTick, bbUINT tickSize)
 {
-    mStore.SaveTick(pRawTick, tickSize);
-
     tsTickUnion tickUnion;
     mStore.tickFactory().unserialize(pRawTick, &static_cast<tsTick&>(tickUnion));
+
+    if (static_cast<const tsTick&>(tickUnion).type() == tsTickType_Diag)
+    {
+        tsTickDiag& tickDiag = static_cast<tsTickDiag&>(static_cast<tsTick&>(tickUnion));
+        tickDiag.setReceiveTime(tsTime::currentTimestamp());
+
+        std::cout << mStore.tickFactory().str(tickDiag) << std::endl;
+        printf("diag %d latency %d ms (%s - %s) %d ms\n", tickDiag.count(), 
+                                                    (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000), 
+                                                    tsTime(tickDiag.receiveTime()).str().c_str(), tsTime(tickDiag.time()).str().c_str(),
+                                                    (int)(((bbS64)tickDiag.sendTime() - (bbS64)tickDiag.time())/1000000));
+    }
+
+    mStore.SaveTick(pRawTick, tickSize);
     Proc(static_cast<const tsTick&>(tickUnion));
+    mTicksReceived++;
 }
 
 void tsTickProc::Proc(const tsTick& tick)
 {
-    //std::cout << mStore.tickFactory().str(tick) << std::endl;
-
-    if (tick.type() == tsTickType_Diag)
-    {
-        const tsTickDiag& diag = static_cast<const tsTickDiag&>(tick);
-        tsTime current = tsTime::current();
-
-        std::cout << mStore.tickFactory().str(diag) << std::endl;
-        printf("diag %d latency %d ms (%s - %s) %d ms\n", tick.count(), 
-                                                    (int)(((bbS64)current.timestamp() - (bbS64)tick.time())/1000000), 
-                                                    current.str().c_str(), tsTime(tick.time()).str().c_str(),
-                                                    (int)(((bbS64)diag.sendTime() - (bbS64)tick.time())/1000000));
-    }
 }
 

@@ -107,7 +107,7 @@ void tsTickSender::sendUnprotected(tsTick& tick)
 void tsTickSender::sendDiagTick()
 {
     tsTick diag(tsTickType_Diag);
-    diag.setTime(tsTime::currentNs());
+    diag.setTime(tsTime::currentTimestamp());
     sendUnprotected(diag);
 }
 
@@ -115,8 +115,8 @@ void tsTickSender::send(tsTick& tick)
 {
     mTickQueueWriteMutex.lock();
 
-    //if (!(mTickCount & 63))
-    //    sendDiagTick();
+    if (!(mTickCount & 63))
+        sendDiagTick();
     sendUnprotected(tick);
 
     mTickQueueWriteMutex.unlock();

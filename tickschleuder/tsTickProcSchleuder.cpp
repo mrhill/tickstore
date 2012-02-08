@@ -75,7 +75,7 @@ void tsTickProcSchleuder::Proc(const tsTick& tick)
     if (setVolume)
     {
         pMon->setVolume(volume);
-        pMon->addVolume(volume);
+        pMon->addTotalVolume(volume);
     }
 }
 

@@ -48,7 +48,7 @@ public:
     inline void setClose(double v) { mClose = v; mValid |= Valid_Close; }
     inline void setVolume(bbU64 v) { mVolume = v; }
     inline void setTotalVolume(bbU64 v) { mTotalVolume = v; }
-    inline void addVolume(bbU64 v) { mTotalVolume += v; }
+    inline void addTotalVolume(bbU64 v) { mTotalVolume += v; }
 
     inline double price() const { return mPrice; }
     inline double high() const { return mHigh; }
@@ -60,4 +60,3 @@ public:
 };
 
 #endif
-

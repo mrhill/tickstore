@@ -105,14 +105,16 @@ std::string tsTickFactory::str(const tsTick& tick) const
 
 void tsTickDiag::serializeTail(char* pBuf) const
 {
-    bbU32 tmp;
-    tmp = (bbU32)mSendTime; bbST32LE(pBuf, tmp); pBuf+=4;
-    tmp = (bbU32)(mSendTime>>32); bbST32LE(pBuf, tmp);
+    bbST64LE(pBuf, mSendTime); pBuf+=8;
+    bbST64LE(pBuf, mReceiveTime); pBuf+=8;
+    bbST64LE(pBuf, mStoreTime); pBuf+=8;
 }
 
 void tsTickDiag::unserializeTail(const char* pBuf)
 {
-    mSendTime = (bbU64)bbLD32LE(pBuf) | ((bbU64)(bbLD32LE(pBuf+4))<<32);
+    mSendTime = bbLD64LE(pBuf); pBuf+=8;
+    mReceiveTime = bbLD64LE(pBuf); pBuf+=8;
+    mStoreTime = bbLD64LE(pBuf); pBuf+=8;
 }
 
 std::string tsTickDiag::strTail() const
