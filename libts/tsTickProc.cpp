@@ -71,7 +71,7 @@ void* tsTickProc::run()
                     }
                     break;
                 }
-                Proc(pRawTick);
+                Proc(pRawTick, frontSize);
                 mTickQueue.pop(frontSize);
 
             } while(!mTickQueue.empty());
@@ -87,9 +87,9 @@ void* tsTickProc::run()
     return NULL;
 }
 
-void tsTickProc::Proc(const char* pRawTick)
+void tsTickProc::Proc(const char* pRawTick, bbUINT tickSize)
 {
-    mStore.SaveTick(pRawTick);
+    mStore.SaveTick(pRawTick, tickSize);
 
     tsTickUnion tickUnion;
     mStore.tickFactory().unserialize(pRawTick, &static_cast<tsTick&>(tickUnion));

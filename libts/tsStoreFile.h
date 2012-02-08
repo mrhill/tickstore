@@ -1,21 +1,22 @@
-#ifndef tsSTOREMEMORY_H
-#define tsSTOREMEMORY_H
+#ifndef tsSTOREFILE_H
+#define tsSTOREFILE_H
 
 #include "tsStore.h"
 #include <map>
 #include <vector>
+#include <stdio.h>
 
-class tsStoreMemory : public tsStore
+class tsStoreFile : public tsStore
 {
     typedef std::vector<char> Table;
     typedef std::map<tsObjID, Table*> ObjIDTableMap;
     ObjIDTableMap mObjID2Table;
 
-    typedef std::map<tsObjID, tsHeader*> ObjIDHeaderMap;
-    ObjIDHeaderMap mObjID2Header;
+    const char* mpFilePath;
+    FILE* mhFile;
 
 public:
-    tsStoreMemory(tsTickFactory& tickFactory) : tsStore(tickFactory) {}
+    tsStoreFile(tsTickFactory& tickFactory, const char* pFilePath);
 
     virtual void SaveTick(const char* pRawTick, bbUINT tickSize);
 };

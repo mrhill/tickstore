@@ -13,3 +13,4 @@ tsStore* tsStore::Create(tsTickFactory& tickFactory, tsStoreBackend type)
 
     return pStore;
 }
+

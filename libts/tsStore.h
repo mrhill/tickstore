@@ -7,7 +7,9 @@
 
 enum tsStoreBackend
 {
-    tsStoreBackend_Memory
+    tsStoreBackend_Memory,
+    tsStoreBackend_File,
+    tsStoreBackendCount
 };
 
 class tsStore
@@ -20,10 +22,7 @@ public:
     tsStore(tsTickFactory& tickFactory) : mTickFactory(tickFactory) {}
     inline tsTickFactory& tickFactory() const { return mTickFactory; }
 
-    virtual void SaveTick(const char* pRawTick) = 0;
-
-    virtual bbERR GetHeader(const tsObjID& objID, tsHeader& header) = 0;
-    virtual bbERR SetHeader(const tsHeader& header) = 0;
+    virtual void SaveTick(const char* pRawTick, bbUINT tickSize) = 0;
 };
 
 #endif

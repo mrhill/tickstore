@@ -256,6 +256,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\tsStoreFile.cpp"
+				>
+			</File>
+			<File
 				RelativePath="tsStoreMemory.cpp"
 				>
 				<FileConfiguration
@@ -377,6 +381,10 @@
 			</File>
 			<File
 				RelativePath="tsStore.h"
+				>
+			</File>
+			<File
+				RelativePath=".\tsStoreFile.h"
 				>
 			</File>
 			<File

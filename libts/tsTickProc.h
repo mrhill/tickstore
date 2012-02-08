@@ -23,7 +23,7 @@ public:
     tsTickProc(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID);
     ~tsTickProc();
 
-    virtual void Proc(const char* pRawTick);
+    virtual void Proc(const char* pRawTick, bbUINT tickSize);
     virtual void Proc(const tsTick& tick);
 };
 
