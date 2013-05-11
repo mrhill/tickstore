@@ -76,7 +76,7 @@ public:
     std::string peerName() const {
         std::string s;
         int port = peerAddress(s);
-        return strprintf("%s:%d", s, port);
+        return strprintf("%s:%d", s.c_str(), port);
     }
 };
 

@@ -6,7 +6,7 @@
 
 void tsTickSender::tierDownConnection()
 {
-    printf(__FUNCTION__ ": tiering down connection\n");
+    printf("%s: tiering down connection\n", __FUNCTION__);
     mSocket.close();
 }
 
@@ -20,11 +20,11 @@ void* tsTickSender::run()
         {
         case tsSocketState_Unconnected:
             try {
-                printf(__FUNCTION__ ": connecting %s:%d...\n", mHostName.c_str(), mPort);
+                printf("%s: connecting %s:%d...\n", __FUNCTION__, mHostName.c_str(), mPort);
                 mSocket.connect(mHostName.c_str(), mPort);
                 retryWait = 500;
             } catch(tsSocketException& e) {
-                printf(e.what());
+                printf("%s", e.what());
 
                 tsThread::msleep(retryWait);
                 if (retryWait < 4000)
@@ -96,7 +96,7 @@ void tsTickSender::sendUnprotected(tsTick& tick)
     int retry = 0;
     while (!mTickQueue.push(tick))
     {
-        printf(__FUNCTION__ ": queue full, retry %d\n", ++retry);
+        printf("%s: queue full, retry %d\n", __FUNCTION__, ++retry);
         tsThread::msleep(100);
     }
 

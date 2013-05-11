@@ -56,7 +56,7 @@ int main(int argc, char** argv)
         tsVecManagedPtr<tsTickProc> tickProcessors;
 
         int port = 2227;
-        std::cout << __FUNCTION__ ": listening for connections on port " << port << std::endl;
+        std::cout << __FUNCTION__ << ": listening for connections on port " << port << std::endl;
         tsSocket listenSocket(tsSocketType_TCP);
         listenSocket.listen(port);
         while (true)

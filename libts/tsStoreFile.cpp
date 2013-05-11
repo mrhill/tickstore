@@ -1,13 +1,14 @@
 #include "tsStoreFile.h"
 #include <iostream>
 #include <stdexcept>
+#include <errno.h>
 
 tsStoreFile::tsStoreFile(tsTickFactory& tickFactory, const char* pFilePath)
   : tsStore(tickFactory), mpFilePath(pFilePath), mhFile(NULL)
 {
     mhFile = fopen(pFilePath, "ab");
     if (!mhFile)
-        throw std::runtime_error(strprintf(__FUNCTION__ ": Error %d opening file '%s'\n", errno, pFilePath));
+        throw std::runtime_error(strprintf("%s: Error %d opening file '%s'\n", __FUNCTION__, errno, pFilePath));
 }
 
 tsStoreFile::~tsStoreFile()

@@ -14,7 +14,7 @@ std::string tsTick::str() const
                      mObjID.exchangeID(),
                      (bbU32)(mObjID.symbolID()>>32), (bbU32)mObjID.symbolID(),
                      mCount,
-                     time.str());
+                     time.str().c_str());
 }
 
 int tsTick::serializeHead(char* pBuf, int tailSize) const

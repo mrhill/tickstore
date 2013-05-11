@@ -3,6 +3,9 @@
 
 #include <babel/defs.h>
 #include <pthread.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 class tsThread
 {

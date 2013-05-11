@@ -6,7 +6,7 @@
 tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, bbUINT bufsize) : mTickFactory(tickFactory), mpBuf(NULL), mSize(bufsize), mRd(0), mWr(0)
 {
     if (!bbIsPwr2(bufsize))
-        throw std::runtime_error(strprintf(__FUNCTION__ ": queue buffer size %d is not power of 2\n", bufsize));
+        throw std::runtime_error(strprintf("%s: queue buffer size %d is not power of 2\n", __FUNCTION__, bufsize));
 
     mpBuf = new char[bufsize];
 }
@@ -135,7 +135,7 @@ int tsTickQueue::frontSize()
 
     if ((tickSize > tsTick::SERIALIZEDMAXSIZE) || (tickSize < tsTick::SERIALIZEDHEADSIZE))
     {
-        printf(__FUNCTION__ ": Warning, bad ticksize %d\n", tickSize);
+        printf("%s: Warning, bad ticksize %d\n", __FUNCTION__, tickSize);
         return -2;
     }
 

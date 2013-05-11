@@ -47,7 +47,11 @@ int tsScheme::AddField(tsType type, const char* pName)
         return -1;
     }
 
+    #ifdef _WIN32
     char* pNameCopy = _strdup(pName);
+    #else
+    char* pNameCopy = strdup(pName);
+    #endif
     if (!pNameCopy)
     {
         bbErrSet(bbENOMEM);

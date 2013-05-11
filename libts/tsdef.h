@@ -4,6 +4,7 @@
 #include <babel/defs.h>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 struct tsRawTick
 {
@@ -51,7 +52,7 @@ template <class T> struct tsVecManagedPtr : public std::vector<T*>
 {
     ~tsVecManagedPtr()
     {
-        for(const_reverse_iterator it = rbegin(); it!=rend(); it++)
+        for(typename std::vector<T*>::const_reverse_iterator it = std::vector<T*>::rbegin(); it!=std::vector<T*>::rend(); it++)
             delete *it;
     }
 };

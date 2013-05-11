@@ -1,9 +1,11 @@
 #include "tsSocket.h"
 
 #ifndef _WIN32
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <arpa/inet.h>
 #define _inet_ntop inet_ntop
 #define _inet_pton inet_pton
 #else
@@ -101,7 +103,7 @@ void tsSocket::close()
         #ifdef _WIN32
         closesocket(mSocket);
         #else
-        close(mSocket);
+        ::close(mSocket);
         #endif
         mSocket = -1;
     }
@@ -117,7 +119,7 @@ void tsSocket::getAddressInfo(const char* pHostName, bbU16 port)
     hints.ai_family = AF_UNSPEC;     // don't care IPv4 or IPv6
     hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
     hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
-    _itoa(port, strPort, 10);
+    snprintf(strPort, 8, "%d", port);
 
     if (mpAddrInfo)
     {
@@ -127,7 +129,7 @@ void tsSocket::getAddressInfo(const char* pHostName, bbU16 port)
 
     int status = getaddrinfo(pHostName, strPort, &hints, &mpAddrInfo);
     if (status != 0)
-        throw tsSocketException(strprintf(__FUNCTION__ ": getaddrinfo error: %s", gai_strerror(status)));
+        throw tsSocketException(strprintf("%s: getaddrinfo error: %s", __FUNCTION__, gai_strerror(status)));
 
 /*
     printf("IP addresses for %s:\n", pHostName);
@@ -167,13 +169,13 @@ void tsSocket::connect(const char* pHostName, bbU16 port, tsSocketMode openMode)
     mSocket = socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
     if (mSocket == -1) {
         close();
-        throw tsSocketException(strprintf(__FUNCTION__ ": Error %d creating socket", errno));
+        throw tsSocketException(strprintf("%s: Error %d creating socket", __FUNCTION__, errno));
     }
 
     int status = ::connect(mSocket, mpAddrInfo->ai_addr, mpAddrInfo->ai_addrlen);
     if (status == -1) {
         close();
-        throw tsSocketException(strprintf(__FUNCTION__ ": Error %d connecting socket", errno));
+        throw tsSocketException(strprintf("%s: Error %d connecting socket", __FUNCTION__, errno));
     }
     mState = tsSocketState_Connected;
 }
@@ -188,20 +190,20 @@ void tsSocket::listen(bbU16 port)
     mSocket = socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
     if (mSocket == -1) {
         close();
-        throw tsSocketException(strprintf(__FUNCTION__ ": Error %d creating socket", errno));
+        throw tsSocketException(strprintf("%s: Error %d creating socket", __FUNCTION__, errno));
     }
 
     int state = bind(mSocket, mpAddrInfo->ai_addr, mpAddrInfo->ai_addrlen);
     if (state == -1) {
         close();
-        throw tsSocketException(strprintf(__FUNCTION__ ": Error %d", errno));
+        throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
     }
     mState = tsSocketState_BoundState;
 
     state = ::listen(mSocket, 10);
     if (state == -1) {
         close();
-        throw tsSocketException(strprintf(__FUNCTION__ ": Error %d", errno));
+        throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
     }
     mState = tsSocketState_ListeningState;
 }
@@ -213,7 +215,7 @@ int tsSocket::accept(tsSocket* pSocket)
 
     int newSocket = ::accept(mSocket, (struct sockaddr *)&their_addr, &addr_size);
     if (newSocket == -1)
-        throw tsSocketException(strprintf(__FUNCTION__ ": Error %d", errno));
+        throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
 
     if (pSocket)
         pSocket->setSocketDescriptor(newSocket);
@@ -227,7 +229,7 @@ void tsSocket::send(const char* pBuf, bbU32 len)
     {
         int status = ::send(mSocket, (const char*)pBuf, len, 0); 
         if (status == -1)
-            throw tsSocketException(strprintf(__FUNCTION__ ": error %d", errno));
+            throw tsSocketException(strprintf("%s: error %d", __FUNCTION__, errno));
         len -= status;
     }
 }
@@ -259,14 +261,14 @@ int tsSocket::recv(char* pBuf, bbU32 bufsize, int timeoutMs)
 
         status = ::select(mSocket+1, &readfd, NULL, NULL, &tv);
         if (status == -1)
-            throw tsSocketException(strprintf(__FUNCTION__ ": error %d on select", errno));
+            throw tsSocketException(strprintf("%s: error %d on select", __FUNCTION__, errno));
         if (status == 0)
             return 0;
     }
 
     status = ::recv(mSocket, pBuf, bufsize, 0);
     if (status == -1)
-        throw tsSocketException(strprintf(__FUNCTION__ ": error %d on recv", errno));
+        throw tsSocketException(strprintf("%s: error %d on recv", __FUNCTION__, errno));
     return status;
 }
 
@@ -283,7 +285,7 @@ int tsSocket::peerAddress(std::string& hostName) const
     int port;
 
     struct sockaddr_storage name;
-    int nameLen = sizeof(name);
+    socklen_t nameLen = sizeof(name);
     if (getpeername(mSocket, (struct sockaddr*)&name, &nameLen))
         return -1;
 

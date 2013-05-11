@@ -17,7 +17,7 @@ void* tsTickProc::run()
     bool connected = true;
     tsTickQueue::BufDesc qtail;
 
-    printf(__FUNCTION__ " %d: connection from %s\n", mProcID, mSocket.peerName().c_str());
+    printf("%s %d: connection from %s\n", __FUNCTION__, mProcID, mSocket.peerName().c_str());
 
     try
     {
@@ -26,7 +26,7 @@ void* tsTickProc::run()
             // - get pointers to free memory at queue tail
             if (!mTickQueue.backRaw(qtail))
             {
-                printf(__FUNCTION__ " %d: receive queue full, wait %u ms\n", mProcID, qfullDelayMs);
+                printf("%s %d: receive queue full, wait %u ms\n", __FUNCTION__, mProcID, qfullDelayMs);
                 tsThread::msleep(qfullDelayMs);
                 if (qfullDelayMs < 4096)
                     qfullDelayMs <<= 1;
@@ -43,7 +43,7 @@ void* tsTickProc::run()
                 }
                 else
                 {
-                    printf(__FUNCTION__ " %d: mSocket.recv first timeout\n", mProcID);
+                    printf("%s %d: mSocket.recv first timeout\n", __FUNCTION__, mProcID);
                     continue;
                 }
             }
@@ -66,7 +66,7 @@ void* tsTickProc::run()
                 {
                     if (frontSize == -2)
                     {
-                        printf(__FUNCTION__ " %d: receive queue deadlock detected, discarding %u bytes\n", mProcID, mTickQueue.size());
+                        printf("%s %d: receive queue deadlock detected, discarding %u bytes\n", __FUNCTION__, mProcID, mTickQueue.size());
                         mTickQueue.flush();
                     }
                     break;
@@ -79,10 +79,10 @@ void* tsTickProc::run()
     }
     catch(tsSocketException& e)
     {
-        printf(__FUNCTION__ " %d: exception '%s'\n", mProcID, e.what());
+        printf("%s %d: exception '%s'\n", __FUNCTION__, mProcID, e.what());
     }
 
-    printf(__FUNCTION__ " %d: shutting down connection from %s (%d bytes left in q)\n", mProcID, mSocket.peerName().c_str(), mTickQueue.size());
+    printf("%s %d: shutting down connection from %s (%d bytes left in q)\n", __FUNCTION__, mProcID, mSocket.peerName().c_str(), mTickQueue.size());
 
     return NULL;
 }
