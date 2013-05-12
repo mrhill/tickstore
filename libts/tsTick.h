@@ -20,9 +20,9 @@ struct tsTick
     bbU64       mTime;      //!< Tick timestamp, interpretation depends on tick type
 
     static const int MAXSIZE = 160; //!< Maximum byte size of tsTick derivated classes, see tsTickUnion
-    static const int SERIALIZEDPREFIX = 2+2;
-    static const int SERIALIZEDHEADSIZE = SERIALIZEDPREFIX+2+2+(4+8)+4+8;
-    static const int SERIALIZEDMAXSIZE = MAXSIZE - SERIALIZEDHEADSIZE;
+    static const int SERIALIZEDPREFIX = 2+2; // u16 type, u16 serialized size (excl. this word)
+    static const int SERIALIZEDHEADSIZE = SERIALIZEDPREFIX+4+8+4+8; // u32 exid, u64 objid, u32 count, u64 time
+    static const int SERIALIZEDMAXSIZE = MAXSIZE;
 
     tsTick(bbU16 type = tsTickType_None) : mType(type), mCount(0), mTime(0) {}
     tsTick(const tsObjID& objID, bbU16 type = tsTickType_None) : mObjID(objID), mType(type), mCount(0), mTime(0) {}

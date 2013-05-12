@@ -10,6 +10,8 @@ class tsStoreMySQL : public tsStore
 {
     MYSQL *mCon;
 
+    void CreateExchange(bbU32 exchangeID);
+
 public:
     tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName);
     virtual ~tsStoreMySQL();

@@ -1,6 +1,7 @@
 #include "tsStoreMySQL.h"
 #include <stdio.h>
 #include <stdexcept>
+#include <babel/StrBuf.h>
 
 tsStoreMySQL::tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName)
   : tsStore(tickFactory), mCon(NULL)
@@ -21,6 +22,8 @@ tsStoreMySQL::tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName)
         throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
     else
         printf("Selected database %s\n", pDBName);
+
+    CreateExchange(0x42);
 }
 
 tsStoreMySQL::~tsStoreMySQL()
@@ -29,7 +32,31 @@ tsStoreMySQL::~tsStoreMySQL()
     mysql_close(mCon);
 }
 
+void tsStoreMySQL::CreateExchange(bbU32 exchangeID)
+{
+    char tableName[12];
+    snprintf(tableName, 12, "x%08X", exchangeID);
+
+    bbStrBuf sql;
+    sql.Printf("CREATE TABLE IF NOT EXISTS %s ("
+                   "id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY,"
+                   "objid BIGINT UNSIGNED NOT NULL DEFAULT 0,"
+                   "tt SMALLINT UNSIGNED NOT NULL DEFAULT 0,"
+                   "count INT UNSIGNED NOT NULL DEFAULT 0,"
+                   "time BIGINT UNSIGNED NOT NULL DEFAULT 0,"
+                   "data VARBINARY(%u) NOT NULL DEFAULT '')", tableName, tsTick::SERIALIZEDMAXSIZE);
+
+    if (mysql_query(mCon, sql.GetPtr()))
+        throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
+    else
+        printf("%s: Created exchange table %s\n", __FUNCTION__, tableName);
+}
+
 void tsStoreMySQL::SaveTick(const char* pRawTick, bbUINT tickSize)
 {
+    tsTickUnion tickUnion;
+    tsTick& tick = tickUnion;
+    tick.unserializeHead(pRawTick);
+
 }
 

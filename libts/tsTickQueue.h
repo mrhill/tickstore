@@ -9,12 +9,12 @@
 */
 class tsTickQueue
 {
-    tsTickFactory& mTickFactory;
-    char*   mpBuf;
-    bbUINT  mRd;
-    bbUINT  mWr;
-    bbUINT  mSize;
-    char    mWrapBuf[tsTick::SERIALIZEDMAXSIZE];
+    tsTickFactory& mTickFactory;    //!< Factory for tick serialization
+    char*   mpBuf;                  //!< Queue circular buffer
+    bbUINT  mRd;                    //!< Current read offset
+    bbUINT  mWr;                    //!< Current write offset
+    bbUINT  mSize;                  //!< Size of queue buffer, must be power of 2
+    char    mWrapBuf[tsTick::SERIALIZEDMAXSIZE]; //!< Temp buffer to handle wraps
 
 public:
     struct BufDesc
@@ -67,7 +67,7 @@ public:
     int  frontRaw(char** ppBuf);
 
     /** Unserialize tick at front of queue.
-        @param pTick 
+        @param pTick
         @return Size in bytes or <=0 if no or incomplete data, -2 if malformed data detected
     */
     int  front(tsTickUnion* pTick);

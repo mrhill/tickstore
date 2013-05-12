@@ -19,29 +19,28 @@ std::string tsTick::str() const
 
 int tsTick::serializeHead(char* pBuf, int tailSize) const
 {
-    bbU32 tmp;
-
+    // prefix
     bbST16LE(pBuf, mType); pBuf+=2;
     tailSize+=tsTick::SERIALIZEDHEADSIZE; bbST16LE(pBuf, tailSize); pBuf+=2;
 
     bbST32LE(pBuf, mObjID.exchangeID()); pBuf+=4;
-    tmp = (bbU32)mObjID.symbolID(); bbST32LE(pBuf, tmp); pBuf+=4;
-    tmp = (bbU32)(mObjID.symbolID()>>32); bbST32LE(pBuf, tmp); pBuf+=4;
-
+    bbST64LE(pBuf, mObjID.symbolID()); pBuf+=8;
     bbST32LE(pBuf, mCount); pBuf+=4;
-    tmp = (bbU32)mTime; bbST32LE(pBuf, tmp); pBuf+=4;
-    tmp = (bbU32)(mTime>>32); bbST32LE(pBuf, tmp);
+    bbST64LE(pBuf, mTime);
 
     return tsTick::SERIALIZEDHEADSIZE;
 }
 
 int tsTick::unserializeHead(const char* pBuf)
 {
+    // prefix
     mType = bbLD16LE(pBuf); pBuf+=4;
+
     mObjID.setExchangeID(bbLD32LE(pBuf)); pBuf+=4;
-    mObjID.setSymbolID((bbU64)bbLD32LE(pBuf) | ((bbU64)(bbLD32LE(pBuf+4))<<32)); pBuf+=8;
+    mObjID.setSymbolID(bbLD64LE(pBuf)); pBuf+=8;
     mCount = bbLD32LE(pBuf); pBuf+=4;
     mTime = bbLD64LE(pBuf);
+
     return tsTick::SERIALIZEDHEADSIZE;
 }
 
