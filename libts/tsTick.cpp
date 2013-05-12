@@ -9,7 +9,7 @@ std::string tsObjID::str() const
 std::string tsTick::str() const
 {
     tsTime time(mTime);
-    return strprintf("type=%d,ex=0x%08X,sym=0x%08X%08X,count=%u,time=%s", 
+    return strprintf("type=%d,ex=0x%08X,sym=0x%08X%08X,count=%u,time=%s",
                      (int)mType,
                      mObjID.exchangeID(),
                      (bbU32)(mObjID.symbolID()>>32), (bbU32)mObjID.symbolID(),
@@ -41,7 +41,7 @@ int tsTick::unserializeHead(const char* pBuf)
     mObjID.setExchangeID(bbLD32LE(pBuf)); pBuf+=4;
     mObjID.setSymbolID((bbU64)bbLD32LE(pBuf) | ((bbU64)(bbLD32LE(pBuf+4))<<32)); pBuf+=8;
     mCount = bbLD32LE(pBuf); pBuf+=4;
-    mTime = (bbU64)bbLD32LE(pBuf) | ((bbU64)(bbLD32LE(pBuf+4))<<32);
+    mTime = bbLD64LE(pBuf);
     return tsTick::SERIALIZEDHEADSIZE;
 }
 

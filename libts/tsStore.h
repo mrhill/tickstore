@@ -9,6 +9,7 @@ enum tsStoreBackend
 {
     tsStoreBackend_Memory,
     tsStoreBackend_File,
+    tsStoreBackend_MySQL,
     tsStoreBackendCount
 };
 

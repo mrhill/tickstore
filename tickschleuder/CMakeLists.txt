@@ -8,4 +8,4 @@ file(GLOB HEADERS "*.h")
 file(GLOB CPP_SOURCES "*.cpp")
 add_executable (tickschleuder ${C_SOURCES} ${CPP_SOURCES} ${HEADERS})
 
-target_link_libraries (tickschleuder ts babel ${CMAKE_THREAD_LIBS_INIT} -lrt)
+target_link_libraries (tickschleuder ts babel ${CMAKE_THREAD_LIBS_INIT} -lrt ${MYSQL_LIBRARY})
