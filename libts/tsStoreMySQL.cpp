@@ -70,7 +70,7 @@ tsStoreMySQL::Exchange::Exchange(tsStoreMySQL& parent, bbU32 exchangeID) : mExch
         throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(parent.mCon)));
 
     bbStrBuf query;
-    query.Printf("INSERT INTO x%08X (sym,tt,count,time,data) VALUES (?,?,?,?,\"?\")", exchangeID);
+    query.Printf("INSERT INTO x%08X (sym,tt,count,time,data) VALUES (?,?,?,?,?)", exchangeID);
 
     if (mysql_stmt_prepare(mInsertStmt, query.GetPtr(), query.GetLen()))
         throw std::runtime_error(strprintf("%s: mysql_stmt_prepare() '%s' failed, %d %s\n", __FUNCTION__,
@@ -81,25 +81,25 @@ tsStoreMySQL::Exchange::Exchange(tsStoreMySQL& parent, bbU32 exchangeID) : mExch
     memset(mInsertParam, 0, sizeof(mInsertParam));
 
     mInsertParam[INSERTPARAM_SYM].buffer_type = MYSQL_TYPE_LONGLONG;
-    mInsertParam[INSERTPARAM_SYM].buffer = (char*)&parent.mParamSym;
+    mInsertParam[INSERTPARAM_SYM].buffer = (char*)&parent.mInsertParam.mSym;
     mInsertParam[INSERTPARAM_SYM].is_unsigned = TRUE;
 
     mInsertParam[INSERTPARAM_TT].buffer_type = MYSQL_TYPE_SHORT;
-    mInsertParam[INSERTPARAM_TT].buffer = (char*)&parent.mParamTT;
+    mInsertParam[INSERTPARAM_TT].buffer = (char*)&parent.mInsertParam.mTT;
     mInsertParam[INSERTPARAM_TT].is_unsigned = TRUE;
 
     mInsertParam[INSERTPARAM_COUNT].buffer_type = MYSQL_TYPE_LONG;
-    mInsertParam[INSERTPARAM_COUNT].buffer = (char*)&parent.mParamCount;
+    mInsertParam[INSERTPARAM_COUNT].buffer = (char*)&parent.mInsertParam.mCount;
     mInsertParam[INSERTPARAM_COUNT].is_unsigned = TRUE;
 
     mInsertParam[INSERTPARAM_TIME].buffer_type = MYSQL_TYPE_LONGLONG;
-    mInsertParam[INSERTPARAM_TIME].buffer = (char*)&parent.mParamTime;
+    mInsertParam[INSERTPARAM_TIME].buffer = (char*)&parent.mInsertParam.mTime;
     mInsertParam[INSERTPARAM_TIME].is_unsigned = TRUE;
 
     mInsertParam[INSERTPARAM_DATA].buffer_type = MYSQL_TYPE_BLOB;
-    mInsertParam[INSERTPARAM_DATA].buffer = parent.mParamEscRawTick;
-    mInsertParam[INSERTPARAM_DATA].buffer_length = tsTick::SERIALIZEDMAXSIZE;
-    mInsertParam[INSERTPARAM_DATA].length = &mInsertParam[INSERTPARAM_DATA].buffer_length;
+    mInsertParam[INSERTPARAM_DATA].buffer = parent.mInsertParam.mEscRawTick;
+    mInsertParam[INSERTPARAM_DATA].buffer_length = sizeof(parent.mInsertParam.mEscRawTick);
+    mInsertParam[INSERTPARAM_DATA].length = &parent.mInsertParam.mEscRawTickLength;
 
     if (mysql_stmt_bind_param(mInsertStmt, mInsertParam))
         throw std::runtime_error(strprintf("%s: mysql_stmt_bind_param() failed, %s\n", __FUNCTION__, mysql_error(parent.mCon)));
@@ -126,12 +126,11 @@ tsStoreMySQL::Exchange* tsStoreMySQL::GetExchange(bbU32 exchangeID)
 
 void tsStoreMySQL::InsertTick(tsStoreMySQL::Exchange* pExchange, tsTick& tick, const char* pRawTick, bbUINT tickSize)
 {
-    //xxx
-    mParamSym   = tick.objID().symbolID();
-    mParamTT    = tick.type();
-    mParamCount = tick.count();
-    mParamTime  = tick.time();
-    mysql_real_escape_string(mCon, mParamEscRawTick, pRawTick, tickSize);
+    mInsertParam.mSym   = tick.objID().symbolID();
+    mInsertParam.mTT    = tick.type();
+    mInsertParam.mCount = tick.count();
+    mInsertParam.mTime  = tick.time();
+    mInsertParam.mEscRawTickLength = mysql_real_escape_string(mCon, mInsertParam.mEscRawTick, pRawTick, tickSize);
 
     if (mysql_stmt_execute(pExchange->mInsertStmt))
         throw std::runtime_error(strprintf("%s: mysql_stmt_execute() failed, %s\n", __FUNCTION__, mysql_error(mCon)));

@@ -10,6 +10,16 @@ class tsStoreMySQL : public tsStore
 {
     MYSQL* mCon;
 
+    struct InsertParam
+    {
+        bbU64 mSym;
+        bbU64 mTime;
+        unsigned long mEscRawTickLength;
+        bbU32 mCount;
+        bbU16 mTT;
+        char  mEscRawTick[tsTick::SERIALIZEDMAXSIZE*2 + 1];
+    };
+
     struct Exchange
     {
         bbU32       mExchangeID;
@@ -22,12 +32,7 @@ class tsStoreMySQL : public tsStore
 
     typedef std::map<bbU32, Exchange*> ExchangeMap;
     ExchangeMap mExchangeMap;
-
-    bbU64 mParamSym;
-    bbU16 mParamTT;
-    bbU32 mParamCount;
-    bbU64 mParamTime;
-    char mParamEscRawTick[tsTick::SERIALIZEDMAXSIZE*2 + 1];
+    InsertParam mInsertParam;
 
     void CreateExchangeTable(bbU32 exchangeID);
     Exchange* GetExchange(bbU32 exchangeID);
