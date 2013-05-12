@@ -3,6 +3,8 @@
 
 #include "tsObjID.h"
 #include "tsTime.h"
+#include <ostream>
+
 #pragma warning(disable: 4355)
 
 enum tsTickType
@@ -97,6 +99,8 @@ public:
     int         unserialize(const char* pBuf, tsTick* pTick) const;
     std::string str(const tsTick& tick) const;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const tsTick& tick) { os<<tick.str(); return os; }
 
 #endif
 

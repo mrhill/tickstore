@@ -25,10 +25,12 @@ int main(int argc, char** argv)
         bbUINT tickSize;
         char buf[tsTick::SERIALIZEDMAXSIZE];
 
+        std::cout << tick << std::endl;
         tickSize = factory.serializedSize(tick);
         factory.serialize(tick, buf);
         pTickerStore->SaveTick(buf, tickSize);
 
+        std::cout << priceTick << std::endl;
         tickSize = factory.serializedSize(priceTick);
         factory.serialize(priceTick, buf);
         pTickerStore->SaveTick(buf, tickSize);

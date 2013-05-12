@@ -111,19 +111,6 @@ tsStoreMySQL::Exchange::~Exchange()
         mysql_stmt_close(mInsertStmt);
 }
 
-void tsStoreMySQL::InsertTick(tsStoreMySQL::Exchange* pExchange, tsTick& tick, const char* pRawTick, bbUINT tickSize)
-{
-    //xxx
-    mParamSym   = tick.objID().symbolID();
-    mParamTT    = tick.type();
-    mParamCount = tick.count();
-    mParamTime  = tick.time();
-    mysql_real_escape_string(mCon, mParamEscRawTick, pRawTick, tickSize);
-
-    if (mysql_stmt_execute(pExchange->mInsertStmt))
-        throw std::runtime_error(strprintf("%s: mysql_stmt_execute() failed, %s\n", __FUNCTION__, mysql_error(mCon)));
-}
-
 tsStoreMySQL::Exchange* tsStoreMySQL::GetExchange(bbU32 exchangeID)
 {
     ExchangeMap::const_iterator it = mExchangeMap.find(exchangeID);
@@ -137,31 +124,28 @@ tsStoreMySQL::Exchange* tsStoreMySQL::GetExchange(bbU32 exchangeID)
     return it->second;
 }
 
+void tsStoreMySQL::InsertTick(tsStoreMySQL::Exchange* pExchange, tsTick& tick, const char* pRawTick, bbUINT tickSize)
+{
+    //xxx
+    mParamSym   = tick.objID().symbolID();
+    mParamTT    = tick.type();
+    mParamCount = tick.count();
+    mParamTime  = tick.time();
+    mysql_real_escape_string(mCon, mParamEscRawTick, pRawTick, tickSize);
+
+    if (mysql_stmt_execute(pExchange->mInsertStmt))
+        throw std::runtime_error(strprintf("%s: mysql_stmt_execute() failed, %s\n", __FUNCTION__, mysql_error(mCon)));
+}
+
 void tsStoreMySQL::SaveTick(const char* pRawTick, bbUINT tickSize)
 {
     bbASSERT(tickSize <= tsTick::SERIALIZEDMAXSIZE);
 
     tsTickUnion tickUnion;
-    char sql[64 + 36+2*22+2*12 + tsTick::SERIALIZEDMAXSIZE*2 + 1];
-
     tsTick& tick = tickUnion;
     tick.unserializeHead(pRawTick);
 
     Exchange* pExchange = GetExchange(tick.mObjID.exchangeID());
     InsertTick(pExchange, tick, pRawTick, tickSize);
-
-    /*
-    char* pBuf = sql + snprintf(sql, sizeof(sql) - tsTick::SERIALIZEDMAXSIZE*2,
-                                "INSERT INTO x%08X (sym,tt,count,time,data) VALUES (%"bbI64"u,%u,%u,%"bbI64"u,\"",
-                                tick.mObjID.exchangeID(), tick.mObjID.symbolID(), (bbUINT)tick.type(), tick.count(), tick.time());
-    pBuf += mysql_real_escape_string(mCon, pBuf, pRawTick, tickSize);
-    pBuf[0] = '"';
-    pBuf[1] = ')';
-    pBuf[2] = 0;
-
-    puts(sql);
-    if (mysql_query(mCon, sql))
-        throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
-    */
 }
 

@@ -98,14 +98,14 @@ void tsTickProc::Proc(const char* pRawTick, bbUINT tickSize)
         tickDiag.setReceiveTime(tsTime::currentTimestamp());
 
         std::cout << mStore.tickFactory().str(tickDiag) << std::endl;
-        printf("diag %d latency %d ms (%s - %s) %d ms\n", tickDiag.count(), 
-                                                    (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000), 
+        printf("diag %d latency %d ms (%s - %s) %d ms\n", tickDiag.count(),
+                                                    (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000),
                                                     tsTime(tickDiag.receiveTime()).str().c_str(), tsTime(tickDiag.time()).str().c_str(),
                                                     (int)(((bbS64)tickDiag.sendTime() - (bbS64)tickDiag.time())/1000000));
     }
 
     mStore.SaveTick(pRawTick, tickSize);
-    Proc(static_cast<const tsTick&>(tickUnion));
+    Proc(tickUnion);
     mTicksReceived++;
 }
 

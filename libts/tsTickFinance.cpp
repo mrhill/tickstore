@@ -96,7 +96,7 @@ void tsTickVolume::unserializeTail(const char* pBuf)
 std::string tsTickVolume::strTail() const
 {
     bbStrBuf str;
-    str.Printf(bbT(",volume=%I64u,opt=%u"), mVolume, mOpt);
+    str.Printf(bbT(",volume=%"bbI64"u,opt=%u"), mVolume, mOpt);
     return std::string(str.GetPtr());
 }
 
@@ -122,7 +122,7 @@ void tsTickPriceVolume::unserializeTail(const char* pBuf)
 std::string tsTickPriceVolume::strTail() const
 {
     bbStrBuf str;
-    str.Printf(bbT(",price=%lg,volume=%I64u,opt=%u"), mPrice, mVolume, mOpt);
+    str.Printf(bbT(",price=%lg,volume=%"bbI64"u,opt=%u"), mPrice, mVolume, mOpt);
     return std::string(str.GetPtr());
 }
 

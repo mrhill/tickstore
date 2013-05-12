@@ -29,7 +29,7 @@ typeMap = {
     'bbU8'  : [1, 0, '%u'],
     'bbU16' : [2, 0, '%u'],
     'bbU32' : [4, 0, '%u'],
-    'bbU64' : [8, 0, '%I64u'],
+    'bbU64' : [8, 0, '%"bbI64"u'],
     'float' : [4, 0, '%g'],
     'double': [8, 0, '%lg'],
 }
@@ -104,7 +104,7 @@ for tickType in tickTypes:
         classDict['accessors']    += """
     inline void set%s(%s %s) { %s = %s; }
     inline %s %s() const { return %s; }""" % (
-            attrName.capitalize(), attrType, attrName, attrMemberName, attrName, 
+            attrName.capitalize(), attrType, attrName, attrMemberName, attrName,
             attrType, attrName, attrMemberName)
 
         tailSize += typeMap[attrType][0]
@@ -148,7 +148,7 @@ for tickType in tickTypes:
             classImplDict['unserializeHead'] += "    u64 = bbLD64LE(pBuf); pBuf+=8; %s = f64;\n" % (attrMemberName)
 
     tickClassImpl += Template(tickClassImplTempl).substitute(classImplDict)
-    
+
 
 templ = Template(open(sys.argv[1]).read())
 open(sys.argv[1].replace(".templ",""), "w").write(
@@ -156,8 +156,8 @@ open(sys.argv[1].replace(".templ",""), "w").write(
 
 templ = Template(open(sys.argv[2]).read())
 open(sys.argv[2].replace(".templ",""), "w").write(
-    templ.substitute(dict(  factoryTailSize=factoryTailSize, 
-                            factorySerializeTail=factorySerializeTail, 
-                            factoryUnserializeTail=factoryUnserializeTail, 
-                            factoryStrTail=factoryStrTail, 
+    templ.substitute(dict(  factoryTailSize=factoryTailSize,
+                            factorySerializeTail=factorySerializeTail,
+                            factoryUnserializeTail=factoryUnserializeTail,
+                            factoryStrTail=factoryStrTail,
                             tickClassImpl=tickClassImpl)))
