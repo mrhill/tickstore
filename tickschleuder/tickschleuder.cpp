@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     int procID = 0;
     try
     {
-        std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_File, "ticks.dat"));
+        std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_MySQL, "ticks_dat"));
         tsVecManagedPtr<tsTickProc> tickProcessors;
 
         int port = 2227;
@@ -73,4 +73,4 @@ int main(int argc, char** argv)
     sender.join();
     return 0;
 }
-   
+

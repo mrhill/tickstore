@@ -23,7 +23,7 @@ void tsStoreFile::SaveTick(const char* pRawTick, bbUINT tickSize)
         printf("%s: error writing %d bytes to '%s'\n", __FUNCTION__, tickSize, mpFilePath);
 
     tsTickUnion tickUnion;
-    tsTick& tick = static_cast<tsTick&>(tickUnion);
+    tsTick& tick = tickUnion;
     tick.unserializeHead(pRawTick);
 
     if (tick.type() != tsTickType_Diag)
