@@ -3,6 +3,7 @@
 
 #include <babel/defs.h>
 #include <string>
+#include <ostream>
 #include "tsdef.h"
 
 class tsObjID
@@ -26,6 +27,8 @@ public:
 
     std::string str() const;
 };
+
+inline std::ostream& operator<<(std::ostream& o, const tsObjID& id) { return o<<id.str(); }
 
 #endif
 
