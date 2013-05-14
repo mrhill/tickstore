@@ -3,6 +3,7 @@
 
 #include <babel/defs.h>
 #include <string>
+#include <ostream>
 
 #ifdef min
 #undef min
@@ -23,7 +24,7 @@ class tsTime
 
 public:
     tsTime(const bbU64 timestamp = 0) : mTimestamp(timestamp), mOpt(0) {}
-    tsTime(int year, int month, int day, int h, int m, int s, int ns);
+    tsTime(int year, int month, int day, int h = 0, int m = 0, int s = 0, int ns = 0);
 
     bbU64  timestamp() const { return mTimestamp; }
     bbU32  nsec() const { return (bbU32)(mTimestamp % 1000000000); }
@@ -49,5 +50,7 @@ public:
     tsDate();
     tsDate(int y, int m, int d);
 };
+
+inline std::ostream& operator<<(std::ostream& o, const tsTime& t) { return o<<t.str(); }
 
 #endif

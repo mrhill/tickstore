@@ -20,9 +20,20 @@ tickTypes = [
            bbU64  volume
            bbU32  opt""" },
 
-    #{'name': 'Bid',         'scheme':'f'},
-    #{'name': 'Ask',         'scheme':'f'},
-    #{'name': 'BidAsk',      'scheme':'f'},
+    {'name': 'Bid', 'scheme':
+        """double price
+           bbU64  volume
+           bbU32  opt""" },
+
+    {'name': 'Ask', 'scheme':
+        """double price
+           bbU64  volume
+           bbU32  opt""" },
+
+    {'name': 'BidAsk', 'scheme':
+        """double priceBid
+           double priceAsk
+           bbU32  opt""" },
 ]
 
 typeMap = {

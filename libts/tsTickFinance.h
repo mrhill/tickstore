@@ -14,6 +14,9 @@ enum
     tsTickType_Price,
     tsTickType_Volume,
     tsTickType_PriceVolume,
+    tsTickType_Bid,
+    tsTickType_Ask,
+    tsTickType_BidAsk,
 
     tsTickTypeCount
 };
@@ -117,6 +120,117 @@ struct tsTickPriceVolume : tsTick
     inline double price() const { return mPrice; }
     inline void setVolume(bbU64 volume) { mVolume = volume; }
     inline bbU64 volume() const { return mVolume; }
+    inline void setOpt(bbU32 opt) { mOpt = opt; }
+    inline bbU32 opt() const { return mOpt; }
+
+    static const int tailSize = 20;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
+};
+
+struct tsTickBid : tsTick
+{
+    double mPrice;
+    bbU64 mVolume;
+    bbU32 mOpt;
+
+    tsTickBid() :
+        mPrice(0),
+        mVolume(0),
+        mOpt(0),
+    tsTick(tsTickType_Bid) {}
+
+    tsTickBid(const tsObjID& objID) :
+        mPrice(0),
+        mVolume(0),
+        mOpt(0),
+    tsTick(objID, tsTickType_Bid) {}
+
+    tsTickBid(const tsObjID& objID, double price, bbU64 volume, bbU32 opt) :
+        mPrice(price),
+        mVolume(volume),
+        mOpt(opt),
+    tsTick(objID, tsTickType_Bid) {}
+
+    inline void setPrice(double price) { mPrice = price; }
+    inline double price() const { return mPrice; }
+    inline void setVolume(bbU64 volume) { mVolume = volume; }
+    inline bbU64 volume() const { return mVolume; }
+    inline void setOpt(bbU32 opt) { mOpt = opt; }
+    inline bbU32 opt() const { return mOpt; }
+
+    static const int tailSize = 20;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
+};
+
+struct tsTickAsk : tsTick
+{
+    double mPrice;
+    bbU64 mVolume;
+    bbU32 mOpt;
+
+    tsTickAsk() :
+        mPrice(0),
+        mVolume(0),
+        mOpt(0),
+    tsTick(tsTickType_Ask) {}
+
+    tsTickAsk(const tsObjID& objID) :
+        mPrice(0),
+        mVolume(0),
+        mOpt(0),
+    tsTick(objID, tsTickType_Ask) {}
+
+    tsTickAsk(const tsObjID& objID, double price, bbU64 volume, bbU32 opt) :
+        mPrice(price),
+        mVolume(volume),
+        mOpt(opt),
+    tsTick(objID, tsTickType_Ask) {}
+
+    inline void setPrice(double price) { mPrice = price; }
+    inline double price() const { return mPrice; }
+    inline void setVolume(bbU64 volume) { mVolume = volume; }
+    inline bbU64 volume() const { return mVolume; }
+    inline void setOpt(bbU32 opt) { mOpt = opt; }
+    inline bbU32 opt() const { return mOpt; }
+
+    static const int tailSize = 20;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
+};
+
+struct tsTickBidAsk : tsTick
+{
+    double mPricebid;
+    double mPriceask;
+    bbU32 mOpt;
+
+    tsTickBidAsk() :
+        mPricebid(0),
+        mPriceask(0),
+        mOpt(0),
+    tsTick(tsTickType_BidAsk) {}
+
+    tsTickBidAsk(const tsObjID& objID) :
+        mPricebid(0),
+        mPriceask(0),
+        mOpt(0),
+    tsTick(objID, tsTickType_BidAsk) {}
+
+    tsTickBidAsk(const tsObjID& objID, double priceBid, double priceAsk, bbU32 opt) :
+        mPricebid(priceBid),
+        mPriceask(priceAsk),
+        mOpt(opt),
+    tsTick(objID, tsTickType_BidAsk) {}
+
+    inline void setPricebid(double priceBid) { mPricebid = priceBid; }
+    inline double priceBid() const { return mPricebid; }
+    inline void setPriceask(double priceAsk) { mPriceask = priceAsk; }
+    inline double priceAsk() const { return mPriceask; }
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 

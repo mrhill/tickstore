@@ -10,6 +10,9 @@ int tsTickFactoryFinance::serializedTailSize(const tsTick& tick) const
     case tsTickType_Price: return tsTickPrice::tailSize;
     case tsTickType_Volume: return tsTickVolume::tailSize;
     case tsTickType_PriceVolume: return tsTickPriceVolume::tailSize;
+    case tsTickType_Bid: return tsTickBid::tailSize;
+    case tsTickType_Ask: return tsTickAsk::tailSize;
+    case tsTickType_BidAsk: return tsTickBidAsk::tailSize;
 
     }
 
@@ -23,6 +26,9 @@ void tsTickFactoryFinance::serializeTail(const tsTick* pTick, char* pBuf) const
     case tsTickType_Price: static_cast<const tsTickPrice*>(pTick)->serializeTail(pBuf); break;
     case tsTickType_Volume: static_cast<const tsTickVolume*>(pTick)->serializeTail(pBuf); break;
     case tsTickType_PriceVolume: static_cast<const tsTickPriceVolume*>(pTick)->serializeTail(pBuf); break;
+    case tsTickType_Bid: static_cast<const tsTickBid*>(pTick)->serializeTail(pBuf); break;
+    case tsTickType_Ask: static_cast<const tsTickAsk*>(pTick)->serializeTail(pBuf); break;
+    case tsTickType_BidAsk: static_cast<const tsTickBidAsk*>(pTick)->serializeTail(pBuf); break;
 
     default:
         tsTickFactory::serializeTail(pTick, pBuf);
@@ -37,6 +43,9 @@ void tsTickFactoryFinance::unserializeTail(const char* pBuf, tsTick* pTick) cons
     case tsTickType_Price: static_cast<tsTickPrice*>(pTick)->unserializeTail(pBuf); break;
     case tsTickType_Volume: static_cast<tsTickVolume*>(pTick)->unserializeTail(pBuf); break;
     case tsTickType_PriceVolume: static_cast<tsTickPriceVolume*>(pTick)->unserializeTail(pBuf); break;
+    case tsTickType_Bid: static_cast<tsTickBid*>(pTick)->unserializeTail(pBuf); break;
+    case tsTickType_Ask: static_cast<tsTickAsk*>(pTick)->unserializeTail(pBuf); break;
+    case tsTickType_BidAsk: static_cast<tsTickBidAsk*>(pTick)->unserializeTail(pBuf); break;
 
     default:
         return tsTickFactory::unserializeTail(pBuf, pTick);
@@ -50,6 +59,9 @@ std::string tsTickFactoryFinance::strTail(const tsTick* pTick) const
     case tsTickType_Price: return static_cast<const tsTickPrice*>(pTick)->strTail();
     case tsTickType_Volume: return static_cast<const tsTickVolume*>(pTick)->strTail();
     case tsTickType_PriceVolume: return static_cast<const tsTickPriceVolume*>(pTick)->strTail();
+    case tsTickType_Bid: return static_cast<const tsTickBid*>(pTick)->strTail();
+    case tsTickType_Ask: return static_cast<const tsTickAsk*>(pTick)->strTail();
+    case tsTickType_BidAsk: return static_cast<const tsTickBidAsk*>(pTick)->strTail();
 
     default:
         return tsTickFactory::strTail(pTick);
@@ -123,6 +135,84 @@ std::string tsTickPriceVolume::strTail() const
 {
     bbStrBuf str;
     str.Printf(bbT(",price=%lg,volume=%"bbI64"u,opt=%u"), mPrice, mVolume, mOpt);
+    return std::string(str.GetPtr());
+}
+
+
+void tsTickBid::serializeTail(char* pBuf) const
+{
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    f64 = mPrice; bbST64LE(pBuf, u64); pBuf+=8;
+    bbST64LE(pBuf, mVolume); pBuf+=8;
+    bbST32LE(pBuf, mOpt); pBuf+=4;
+}
+
+void tsTickBid::unserializeTail(const char* pBuf)
+{
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    u64 = bbLD64LE(pBuf); pBuf+=8; mPrice = f64;
+    mVolume = bbLD64LE(pBuf); pBuf+=8;
+    mOpt = bbLD32LE(pBuf); pBuf+=4;
+}
+
+std::string tsTickBid::strTail() const
+{
+    bbStrBuf str;
+    str.Printf(bbT(",price=%lg,volume=%"bbI64"u,opt=%u"), mPrice, mVolume, mOpt);
+    return std::string(str.GetPtr());
+}
+
+
+void tsTickAsk::serializeTail(char* pBuf) const
+{
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    f64 = mPrice; bbST64LE(pBuf, u64); pBuf+=8;
+    bbST64LE(pBuf, mVolume); pBuf+=8;
+    bbST32LE(pBuf, mOpt); pBuf+=4;
+}
+
+void tsTickAsk::unserializeTail(const char* pBuf)
+{
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    u64 = bbLD64LE(pBuf); pBuf+=8; mPrice = f64;
+    mVolume = bbLD64LE(pBuf); pBuf+=8;
+    mOpt = bbLD32LE(pBuf); pBuf+=4;
+}
+
+std::string tsTickAsk::strTail() const
+{
+    bbStrBuf str;
+    str.Printf(bbT(",price=%lg,volume=%"bbI64"u,opt=%u"), mPrice, mVolume, mOpt);
+    return std::string(str.GetPtr());
+}
+
+
+void tsTickBidAsk::serializeTail(char* pBuf) const
+{
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    f64 = mPricebid; bbST64LE(pBuf, u64); pBuf+=8;
+    f64 = mPriceask; bbST64LE(pBuf, u64); pBuf+=8;
+    bbST32LE(pBuf, mOpt); pBuf+=4;
+}
+
+void tsTickBidAsk::unserializeTail(const char* pBuf)
+{
+    union { bbU32 u32; float f32; bbU64 u64; double f64; };
+
+    u64 = bbLD64LE(pBuf); pBuf+=8; mPricebid = f64;
+    u64 = bbLD64LE(pBuf); pBuf+=8; mPriceask = f64;
+    mOpt = bbLD32LE(pBuf); pBuf+=4;
+}
+
+std::string tsTickBidAsk::strTail() const
+{
+    bbStrBuf str;
+    str.Printf(bbT(",priceBid=%lg,priceAsk=%lg,opt=%u"), mPricebid, mPriceask, mOpt);
     return std::string(str.GetPtr());
 }
 

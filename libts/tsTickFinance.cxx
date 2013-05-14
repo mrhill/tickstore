@@ -20,3 +20,27 @@
         .add_property("volume", &tsTickPriceVolume::volume, &tsTickPriceVolume::setVolume)
         .add_property("opt", &tsTickPriceVolume::opt, &tsTickPriceVolume::setOpt)
     ;
+
+    class_<tsTickBid, bases<tsTick> >("tsTickBid")
+        .def(init<const tsObjID&>())
+        .def(init<const tsObjID&,double,bbU64,bbU32>())
+        .add_property("price", &tsTickBid::price, &tsTickBid::setPrice)
+        .add_property("volume", &tsTickBid::volume, &tsTickBid::setVolume)
+        .add_property("opt", &tsTickBid::opt, &tsTickBid::setOpt)
+    ;
+
+    class_<tsTickAsk, bases<tsTick> >("tsTickAsk")
+        .def(init<const tsObjID&>())
+        .def(init<const tsObjID&,double,bbU64,bbU32>())
+        .add_property("price", &tsTickAsk::price, &tsTickAsk::setPrice)
+        .add_property("volume", &tsTickAsk::volume, &tsTickAsk::setVolume)
+        .add_property("opt", &tsTickAsk::opt, &tsTickAsk::setOpt)
+    ;
+
+    class_<tsTickBidAsk, bases<tsTick> >("tsTickBidAsk")
+        .def(init<const tsObjID&>())
+        .def(init<const tsObjID&,double,double,bbU32>())
+        .add_property("priceBid", &tsTickBidAsk::priceBid, &tsTickBidAsk::setPricebid)
+        .add_property("priceAsk", &tsTickBidAsk::priceAsk, &tsTickBidAsk::setPriceask)
+        .add_property("opt", &tsTickBidAsk::opt, &tsTickBidAsk::setOpt)
+    ;

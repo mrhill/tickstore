@@ -1,4 +1,5 @@
 #include <boost/python.hpp>
+#include "tsTime.h"
 #include "tsTickSender.h"
 #include "tsTickFinance.h"
 
@@ -10,9 +11,14 @@ struct tsTickSenderFinance : public tsTickSender
 	tsTickSenderFinance(const char* host, int port = 2227) : tsTickSender(tickFactoryFinance, host, port) {}
 };
 
-char const* greet()
+bbU64 symFromStr(char const* pStr)
 {
-   return "hello, world";
+    bbU64 sym = 0;
+    bbUINT i = 0;
+    while(char c = *pStr++) {
+        sym |= (bbU64)c << i; i+=8;
+    }
+    return sym;
 }
 
 BOOST_PYTHON_MODULE(pyts)
@@ -20,7 +26,12 @@ BOOST_PYTHON_MODULE(pyts)
     using namespace boost::python;
 	using self_ns::str;
 
-    def("greet", greet);
+    def("symFromStr", symFromStr);
+
+    class_<tsTime>("tsTime")
+        .def(init<int,int,int, int,int,int, int>())
+        .def(str(self))
+    ;
 
     class_<tsObjID>("tsObjID")
         .def(init<bbU32, bbU64>())
@@ -31,11 +42,13 @@ BOOST_PYTHON_MODULE(pyts)
     ;
 
 	void (tsTick::*setTimeU64)(bbU64) = &tsTick::setTime;
+    void (tsTick::*setTimeTS)(const tsTime&) = &tsTick::setTime;
     class_<tsTick>("tsTick")
         .add_property("objID", make_function( &tsTick::objID, return_value_policy<copy_const_reference>() ), &tsTick::setObjID)
         .add_property("type", &tsTick::type)
         .add_property("count", &tsTick::count, &tsTick::setCount)
         .add_property("time", &tsTick::time, setTimeU64)
+        .def("setTime", setTimeTS)
         .def(str(self))
     ;
 
