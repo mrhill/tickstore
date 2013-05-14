@@ -44,11 +44,14 @@ tickClassTempl = """
 struct tsTick$name : tsTick
 {
 $members
-    tsTick$name(const tsObjID& objID$initParams) :
-$initializers        tsTick(objID, tsTickType_$name)
-    {
-    }
+    tsTick$name() :
+$initializers0    tsTick(tsTickType_$name) {}
 
+    tsTick$name(const tsObjID& objID) :
+$initializers0    tsTick(objID, tsTickType_$name) {}
+
+    tsTick$name(const tsObjID& objID$initParams) :
+$initializers    tsTick(objID, tsTickType_$name) {}
 $accessors
 
     static const int tailSize = $tailSize;
@@ -76,6 +79,13 @@ std::string tsTick${name}::strTail() const
 
 """
 
+tickPyClassTempl = """
+    class_<tsTick${name}, bases<tsTick> >("tsTick${name}")
+        .def(init<const tsObjID&>())
+        .def(init<const tsObjID&${initParams}>())
+$pyAccessors    ;
+"""
+
 tickTypeDefs = ''
 tickClassDefs = ''
 
@@ -84,6 +94,7 @@ factorySerializeTail = ''
 factoryUnserializeTail = ''
 factoryStrTail = ''
 tickClassImpl = ''
+tickPyClassImpl = ''
 
 for tickType in tickTypes:
     name = tickType['name']
@@ -93,13 +104,14 @@ for tickType in tickTypes:
 
     tickTypeDefs += "    tsTickType_" + name + ",\n"
 
-    classDict = dict(name=name, initParams='', members='', initializers='', accessors='')
+    classDict = dict(name=name, initParams='', members='', initializers0='', initializers='', accessors='')
     tailSize = 0
     for (attrType, attrName) in scheme:
         attrMemberName = 'm'+attrName.capitalize()
         classDict['members']      += "    %s %s;\n" % (attrType, attrMemberName)
         classDict['initParams']   += ", %s %s" % (attrType, attrName)
         classDict['initializers'] += "        %s(%s),\n" % (attrMemberName, attrName)
+        classDict['initializers0']+= "        %s(0),\n" % (attrMemberName)
 
         classDict['accessors']    += """
     inline void set%s(%s %s) { %s = %s; }
@@ -149,6 +161,17 @@ for tickType in tickTypes:
 
     tickClassImpl += Template(tickClassImplTempl).substitute(classImplDict)
 
+    # Generate .cxx python wrapper for this tick type
+
+    pyClassImplDict = dict(name=name, pyAccessors='', initParams='')
+    for (attrType, attrName) in scheme:
+        attrGet = attrName
+        attrSet = 'set'+attrName.capitalize()
+        pyClassImplDict['pyAccessors'] += '        .add_property("%s", &tsTick%s::%s, &tsTick%s::%s)\n' % (attrName, name, attrGet, name, attrSet)
+        pyClassImplDict['initParams'] += ",%s" % (attrType)
+
+    tickPyClassImpl += Template(tickPyClassTempl).substitute(pyClassImplDict)
+
 
 templ = Template(open(sys.argv[1]).read())
 open(sys.argv[1].replace(".templ",""), "w").write(
@@ -161,3 +184,5 @@ open(sys.argv[2].replace(".templ",""), "w").write(
                             factoryUnserializeTail=factoryUnserializeTail,
                             factoryStrTail=factoryStrTail,
                             tickClassImpl=tickClassImpl)))
+
+open(sys.argv[2].replace("cpp.templ","cxx"), "w").write(tickPyClassImpl)

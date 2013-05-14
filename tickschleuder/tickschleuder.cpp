@@ -46,8 +46,8 @@ class TestSendThread : public tsThread
 int main(int argc, char** argv)
 {
     tsTickFactoryFinance factory;
-    TestSendThread sender;
-    sender.start();
+    //TestSendThread sender;
+    //sender.start();
 
     int procID = 0;
     try
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         std::cout << e.what();
     }
 
-    sender.join();
+    //sender.join();
     return 0;
 }
 

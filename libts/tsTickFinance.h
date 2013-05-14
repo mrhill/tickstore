@@ -32,13 +32,20 @@ struct tsTickPrice : tsTick
     double mPrice;
     bbU32 mOpt;
 
+    tsTickPrice() :
+        mPrice(0),
+        mOpt(0),
+    tsTick(tsTickType_Price) {}
+
+    tsTickPrice(const tsObjID& objID) :
+        mPrice(0),
+        mOpt(0),
+    tsTick(objID, tsTickType_Price) {}
+
     tsTickPrice(const tsObjID& objID, double price, bbU32 opt) :
         mPrice(price),
         mOpt(opt),
-        tsTick(objID, tsTickType_Price)
-    {
-    }
-
+    tsTick(objID, tsTickType_Price) {}
 
     inline void setPrice(double price) { mPrice = price; }
     inline double price() const { return mPrice; }
@@ -56,13 +63,20 @@ struct tsTickVolume : tsTick
     bbU64 mVolume;
     bbU32 mOpt;
 
+    tsTickVolume() :
+        mVolume(0),
+        mOpt(0),
+    tsTick(tsTickType_Volume) {}
+
+    tsTickVolume(const tsObjID& objID) :
+        mVolume(0),
+        mOpt(0),
+    tsTick(objID, tsTickType_Volume) {}
+
     tsTickVolume(const tsObjID& objID, bbU64 volume, bbU32 opt) :
         mVolume(volume),
         mOpt(opt),
-        tsTick(objID, tsTickType_Volume)
-    {
-    }
-
+    tsTick(objID, tsTickType_Volume) {}
 
     inline void setVolume(bbU64 volume) { mVolume = volume; }
     inline bbU64 volume() const { return mVolume; }
@@ -81,14 +95,23 @@ struct tsTickPriceVolume : tsTick
     bbU64 mVolume;
     bbU32 mOpt;
 
+    tsTickPriceVolume() :
+        mPrice(0),
+        mVolume(0),
+        mOpt(0),
+    tsTick(tsTickType_PriceVolume) {}
+
+    tsTickPriceVolume(const tsObjID& objID) :
+        mPrice(0),
+        mVolume(0),
+        mOpt(0),
+    tsTick(objID, tsTickType_PriceVolume) {}
+
     tsTickPriceVolume(const tsObjID& objID, double price, bbU64 volume, bbU32 opt) :
         mPrice(price),
         mVolume(volume),
         mOpt(opt),
-        tsTick(objID, tsTickType_PriceVolume)
-    {
-    }
-
+    tsTick(objID, tsTickType_PriceVolume) {}
 
     inline void setPrice(double price) { mPrice = price; }
     inline double price() const { return mPrice; }

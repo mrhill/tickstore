@@ -36,9 +36,17 @@ BOOST_PYTHON_MODULE(pyts)
         .add_property("type", &tsTick::type)
         .add_property("count", &tsTick::count, &tsTick::setCount)
         .add_property("time", &tsTick::time, setTimeU64)
-        //.def("setTime", &tsTick::setTime)
         .def(str(self))
     ;
+
+    class_<tsTickDiag, bases<tsTick> >("tsTickDiag")
+        .def(init<const tsObjID&>())
+        .add_property("sendTime", &tsTickDiag::sendTime, &tsTickDiag::setSendTime)
+        .add_property("receiveTime", &tsTickDiag::receiveTime, &tsTickDiag::setReceiveTime)
+        .add_property("storeTime", &tsTickDiag::storeTime, &tsTickDiag::setStoreTime)
+    ;
+
+    #include "tsTickFinance.cxx"
 
     class_<tsTickSenderFinance>("tsTickSender")
         .def(init<const char*, int>())

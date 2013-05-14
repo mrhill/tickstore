@@ -54,13 +54,19 @@ struct tsTickDiag : tsTick
     bbU64 mReceiveTime;
     bbU64 mStoreTime;
 
+    tsTickDiag() : 
+        tsTick(tsTickType_Diag),
+        mSendTime(0),
+        mReceiveTime(0),
+        mStoreTime(0)
+    {}
+
     tsTickDiag(const tsObjID& objID) :
         tsTick(objID, tsTickType_Diag),
         mSendTime(0),
         mReceiveTime(0),
         mStoreTime(0)
-    {
-    }
+    {}
 
     inline bbU64 sendTime() const { return mSendTime; }
     inline void setSendTime(bbU64 timestamp) { mSendTime = timestamp; }
