@@ -18,7 +18,7 @@ public:
 
     tsMonSymbol* GetMon(const tsObjID& objID);
 
-    virtual void Proc(const tsTick& tick);
+    virtual void Proc_(const tsTick& tick);
 };
 
 #endif

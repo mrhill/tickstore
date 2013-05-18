@@ -133,7 +133,7 @@ void tsStoreMySQL::InsertTick(tsStoreMySQL::Exchange* pExchange, tsTick& tick, c
     mInsertParam.mEscRawTickLength = mysql_real_escape_string(mCon, mInsertParam.mEscRawTick, pRawTick, tickSize);
 
     if (mysql_stmt_execute(pExchange->mInsertStmt))
-        throw std::runtime_error(strprintf("%s: mysql_stmt_execute() failed, %s\n", __FUNCTION__, mysql_error(mCon)));
+        throw tsStoreException(strprintf("%s: mysql_stmt_execute() failed, %s\n", __FUNCTION__, mysql_error(mCon)));
 }
 
 void tsStoreMySQL::SaveTick(const char* pRawTick, bbUINT tickSize)
@@ -143,6 +143,8 @@ void tsStoreMySQL::SaveTick(const char* pRawTick, bbUINT tickSize)
     tsTickUnion tickUnion;
     tsTick& tick = tickUnion;
     tick.unserializeHead(pRawTick);
+
+    tsMutexLocker lock(mMutex);
 
     Exchange* pExchange = GetExchange(tick.mObjID.exchangeID());
     InsertTick(pExchange, tick, pRawTick, tickSize);

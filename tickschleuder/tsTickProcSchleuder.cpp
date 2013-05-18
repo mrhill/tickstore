@@ -10,11 +10,11 @@ tsMonSymbol* tsTickProcSchleuder::GetMon(const tsObjID& objID)
         mObjID2Mon[objID] = pMon = new tsMonSymbol;
     else
         pMon = it->second;
-        
+
     return pMon;
 }
 
-void tsTickProcSchleuder::Proc(const tsTick& tick)
+void tsTickProcSchleuder::Proc_(const tsTick& tick)
 {
     bool setPrice  = false;
     bool setVolume = false;
@@ -61,10 +61,10 @@ void tsTickProcSchleuder::Proc(const tsTick& tick)
     if (setPrice)
     {
         pMon->setPrice(price);
-     
+
         if (!pMon->highValid() || price > pMon->high())
             pMon->setHigh(price);
-        
+
         if (!pMon->lowValid() || price < pMon->low())
             pMon->setLow(price);
 

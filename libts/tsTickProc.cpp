@@ -104,9 +104,16 @@ void tsTickProc::Proc(const char* pRawTick, bbUINT tickSize)
                                                     (int)(((bbS64)tickDiag.sendTime() - (bbS64)tickDiag.time())/1000000));
     }
 
-    mStore.SaveTick(pRawTick, tickSize);
-    Proc(tickUnion);
-    mTicksReceived++;
+    try
+    {
+        mStore.SaveTick(pRawTick, tickSize);
+        Proc(tickUnion);
+        mTicksReceived++;
+    }
+    catch (tsStoreException& e)
+    {
+        std::cout << __FUNCTION__ << ": " << e.what();
+    }
 }
 
 void tsTickProc::Proc(const tsTick& tick)

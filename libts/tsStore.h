@@ -4,6 +4,7 @@
 #include "tsObjID.h"
 #include "tsHeader.h"
 #include "tsTick.h"
+#include <stdexcept>
 
 enum tsStoreBackend
 {
@@ -11,6 +12,12 @@ enum tsStoreBackend
     tsStoreBackend_File,
     tsStoreBackend_MySQL,
     tsStoreBackendCount
+};
+
+class tsStoreException : public std::runtime_error
+{
+public:
+    tsStoreException(const std::string& what_arg) : std::runtime_error(what_arg) {}
 };
 
 class tsStore

@@ -2,6 +2,7 @@
 #define tsSTOREMYSQL_H
 
 #include "tsStore.h"
+#include "tsMutex.h"
 #include <map>
 #include <my_global.h>
 #include <mysql.h>
@@ -9,6 +10,7 @@
 class tsStoreMySQL : public tsStore
 {
     MYSQL* mCon;
+    tsMutex mMutex;
 
     struct InsertParam
     {
