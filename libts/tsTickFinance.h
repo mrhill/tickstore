@@ -17,6 +17,7 @@ enum
     tsTickType_Bid,
     tsTickType_Ask,
     tsTickType_BidAsk,
+    tsTickType_Recap,
 
     tsTickTypeCount
 };
@@ -205,36 +206,97 @@ struct tsTickAsk : tsTick
 
 struct tsTickBidAsk : tsTick
 {
-    double mPricebid;
-    double mPriceask;
+    double mPriceBid;
+    double mPriceAsk;
     bbU32 mOpt;
 
     tsTickBidAsk() :
-        mPricebid(0),
-        mPriceask(0),
+        mPriceBid(0),
+        mPriceAsk(0),
         mOpt(0),
     tsTick(tsTickType_BidAsk) {}
 
     tsTickBidAsk(const tsObjID& objID) :
-        mPricebid(0),
-        mPriceask(0),
+        mPriceBid(0),
+        mPriceAsk(0),
         mOpt(0),
     tsTick(objID, tsTickType_BidAsk) {}
 
     tsTickBidAsk(const tsObjID& objID, double priceBid, double priceAsk, bbU32 opt) :
-        mPricebid(priceBid),
-        mPriceask(priceAsk),
+        mPriceBid(priceBid),
+        mPriceAsk(priceAsk),
         mOpt(opt),
     tsTick(objID, tsTickType_BidAsk) {}
 
-    inline void setPricebid(double priceBid) { mPricebid = priceBid; }
-    inline double priceBid() const { return mPricebid; }
-    inline void setPriceask(double priceAsk) { mPriceask = priceAsk; }
-    inline double priceAsk() const { return mPriceask; }
+    inline void setPriceBid(double priceBid) { mPriceBid = priceBid; }
+    inline double priceBid() const { return mPriceBid; }
+    inline void setPriceAsk(double priceAsk) { mPriceAsk = priceAsk; }
+    inline double priceAsk() const { return mPriceAsk; }
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
     static const int tailSize = 20;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
+};
+
+struct tsTickRecap : tsTick
+{
+    double mOpen;
+    double mHigh;
+    double mLow;
+    double mClose;
+    bbU64 mVolume;
+    bbU64 mOpenInt;
+    bbU32 mOpt;
+
+    tsTickRecap() :
+        mOpen(0),
+        mHigh(0),
+        mLow(0),
+        mClose(0),
+        mVolume(0),
+        mOpenInt(0),
+        mOpt(0),
+    tsTick(tsTickType_Recap) {}
+
+    tsTickRecap(const tsObjID& objID) :
+        mOpen(0),
+        mHigh(0),
+        mLow(0),
+        mClose(0),
+        mVolume(0),
+        mOpenInt(0),
+        mOpt(0),
+    tsTick(objID, tsTickType_Recap) {}
+
+    tsTickRecap(const tsObjID& objID, double open, double high, double low, double close, bbU64 volume, bbU64 openInt, bbU32 opt) :
+        mOpen(open),
+        mHigh(high),
+        mLow(low),
+        mClose(close),
+        mVolume(volume),
+        mOpenInt(openInt),
+        mOpt(opt),
+    tsTick(objID, tsTickType_Recap) {}
+
+    inline void setOpen(double open) { mOpen = open; }
+    inline double open() const { return mOpen; }
+    inline void setHigh(double high) { mHigh = high; }
+    inline double high() const { return mHigh; }
+    inline void setLow(double low) { mLow = low; }
+    inline double low() const { return mLow; }
+    inline void setClose(double close) { mClose = close; }
+    inline double close() const { return mClose; }
+    inline void setVolume(bbU64 volume) { mVolume = volume; }
+    inline bbU64 volume() const { return mVolume; }
+    inline void setOpenInt(bbU64 openInt) { mOpenInt = openInt; }
+    inline bbU64 openInt() const { return mOpenInt; }
+    inline void setOpt(bbU32 opt) { mOpt = opt; }
+    inline bbU32 opt() const { return mOpt; }
+
+    static const int tailSize = 52;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;

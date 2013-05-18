@@ -40,7 +40,19 @@
     class_<tsTickBidAsk, bases<tsTick> >("tsTickBidAsk")
         .def(init<const tsObjID&>())
         .def(init<const tsObjID&,double,double,bbU32>())
-        .add_property("priceBid", &tsTickBidAsk::priceBid, &tsTickBidAsk::setPricebid)
-        .add_property("priceAsk", &tsTickBidAsk::priceAsk, &tsTickBidAsk::setPriceask)
+        .add_property("priceBid", &tsTickBidAsk::priceBid, &tsTickBidAsk::setPriceBid)
+        .add_property("priceAsk", &tsTickBidAsk::priceAsk, &tsTickBidAsk::setPriceAsk)
         .add_property("opt", &tsTickBidAsk::opt, &tsTickBidAsk::setOpt)
+    ;
+
+    class_<tsTickRecap, bases<tsTick> >("tsTickRecap")
+        .def(init<const tsObjID&>())
+        .def(init<const tsObjID&,double,double,double,double,bbU64,bbU64,bbU32>())
+        .add_property("open", &tsTickRecap::open, &tsTickRecap::setOpen)
+        .add_property("high", &tsTickRecap::high, &tsTickRecap::setHigh)
+        .add_property("low", &tsTickRecap::low, &tsTickRecap::setLow)
+        .add_property("close", &tsTickRecap::close, &tsTickRecap::setClose)
+        .add_property("volume", &tsTickRecap::volume, &tsTickRecap::setVolume)
+        .add_property("openInt", &tsTickRecap::openInt, &tsTickRecap::setOpenInt)
+        .add_property("opt", &tsTickRecap::opt, &tsTickRecap::setOpt)
     ;

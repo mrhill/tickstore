@@ -90,7 +90,7 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 		classDict = dict(name=name, initParams='', members='', initializers0='', initializers='', accessors='')
 		tailSize = 0
 		for (attrType, attrName) in scheme:
-		    attrMemberName = 'm'+attrName.capitalize()
+		    attrMemberName = 'm'+attrName[0].upper()+attrName[1:]
 		    classDict['members']      += "    %s %s;\n" % (attrType, attrMemberName)
 		    classDict['initParams']   += ", %s %s" % (attrType, attrName)
 		    classDict['initializers'] += "        %s(%s),\n" % (attrMemberName, attrName)
@@ -99,7 +99,7 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 		    classDict['accessors']    += """
     inline void set%s(%s %s) { %s = %s; }
     inline %s %s() const { return %s; }""" % (
-		        attrName.capitalize(), attrType, attrName, attrMemberName, attrName,
+		        attrName[0].upper()+attrName[1:], attrType, attrName, attrMemberName, attrName,
 		        attrType, attrName, attrMemberName)
 
 		    tailSize += typeMap[attrType][0]
@@ -116,7 +116,7 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 
 		classImplDict = dict(name=name, attrFmt='', attrVar='', serializeTail='', serializeTailUnion='', unserializeHead='')
 		for (attrType, attrName) in scheme:
-		    attrMemberName = 'm'+attrName.capitalize()
+		    attrMemberName = 'm'+attrName[0].upper()+attrName[1:]
 		    classImplDict['attrFmt'] += ",%s=%s" % (attrName, typeMap[attrType][2])
 		    classImplDict['attrVar'] += ", %s" % (attrMemberName)
 
@@ -149,7 +149,7 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 		pyClassImplDict = dict(name=name, pyAccessors='', initParams='')
 		for (attrType, attrName) in scheme:
 		    attrGet = attrName
-		    attrSet = 'set'+attrName.capitalize()
+		    attrSet = 'set'+attrName[0].upper()+attrName[1:]
 		    pyClassImplDict['pyAccessors'] += '        .add_property("%s", &tsTick%s::%s, &tsTick%s::%s)\n' % (attrName, name, attrGet, name, attrSet)
 		    pyClassImplDict['initParams'] += ",%s" % (attrType)
 

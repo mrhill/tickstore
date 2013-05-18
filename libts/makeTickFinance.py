@@ -30,6 +30,15 @@ tickTypes = [
         """double priceBid
            double priceAsk
            bbU32  opt""" },
+
+    {'name': 'Recap', 'scheme':
+        """double open
+           double high
+           double low
+           double close
+           bbU64  volume
+           bbU64  openInt
+           bbU32  opt""" },
 ]
 
 makeTicks(tickTypes, "tsTickFinance.h.templ", "tsTickFinance.cpp.templ")
