@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
-import urllib2, time, hashlib, os, sys, datetime
+import sys, datetime
 from BeautifulSoup import BeautifulSoup
 sys.path.append("../../libts")
 from pyts import *
+sys.path.append("..")
+from pytsutil import *
 
 groups = [ 'Regular', 'Gold', 'Platinum' ]
 
@@ -48,36 +50,6 @@ def parsePage(sender, page):
                 else:
                     ask=float(s)
                     list.append( (symbol, bid, ask) )
-
-class HttpPoll:
-    def __init__(self, url):
-        self.url = url
-        self.hashOld = 0
-        self.pollCount = 0
-
-    def pollHttp(self):
-        self.pollCount += 1
-        code = 0
-        try:
-            page = urllib2.urlopen(self.url)
-        except urllib2.HTTPError, e:
-            code = e.code
-
-        print self.pollCount, time.strftime('%Y%m%d-%H%M%S'), self.url, code
-
-        if code == 0:
-            pageText = page.read()
-            hash = hashlib.sha1(pageText).digest()
-            if hash != self.hashOld:
-                (urlPath, urlFile) = os.path.split(self.url)
-                file = open("data/"+urlFile+time.strftime('.%Y%m%d-%H%M%S.html'), "wb")
-                file.write(unicode(page.info()))
-                file.write(unicode(pageText))
-                file.close
-                self.hashOld = hash
-                return pageText
-
-        return None
 
 fetchDir = "data"
 try:
