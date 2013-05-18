@@ -118,7 +118,6 @@ void tsTickDiag::unserializeTail(const char* pBuf)
 
 std::string tsTickDiag::strTail() const
 {
-    tsTime time(mSendTime);
-    return ",sendtime=" + time.str();
+    return ",sendtime=" + tsTime(mSendTime).str() + ",receivetime=" + tsTime(mReceiveTime).str();
 }
 

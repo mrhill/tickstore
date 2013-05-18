@@ -1,5 +1,5 @@
 #include "tsStoreMemory.h"
-#include "tsTickProcSchleuder.h"
+#include "tsTickReceiver.h"
 #include "tsThread.h"
 #include "tsTickSender.h"
 #include "tsTickFinance.h"
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     try
     {
         std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_MySQL, "ticks"));
-        tsVecManagedPtr<tsTickProc> tickProcessors;
+        tsVecManagedPtr<tsTickReceiver> tickProcessors;
 
         int port = 2227;
         std::cout << __FUNCTION__ << ": listening for connections on port " << port << std::endl;
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
         while (true)
         {
             int newSocket = listenSocket.accept();
-            tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID));
+            tickProcessors.push_back(new tsTickReceiver(factory, *pTickerStore, newSocket, ++procID));
         }
     }
     catch(std::exception& e)

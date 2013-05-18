@@ -1,18 +1,18 @@
 #ifndef tsTICKPROCSCHLEUDER_H
 #define tsTICKPROCSCHLEUDER_H
 
-#include "tsTickProc.h"
+#include "tsTickReceiver.h"
 #include "tsMon.h"
 #include "tsObjID.h"
 #include <map>
 
-class tsTickProcSchleuder : public tsTickProc
+class tsTickProcSchleuder : public tsTickReceiver
 {
     typedef std::map<tsObjID, tsMonSymbol*> ObjIDMonMap;
     ObjIDMonMap mObjID2Mon;
 public:
     tsTickProcSchleuder(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID)
-      : tsTickProc(tickFactory, store, socketFD, procID)
+      : tsTickReceiver(tickFactory, store, socketFD, procID)
     {
     }
 

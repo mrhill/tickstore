@@ -1,17 +1,18 @@
-#include "tsTickProc.h"
+#include "tsTickReceiver.h"
 #include <iostream>
 
-tsTickProc::tsTickProc(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID) : mStore(store), mSocket(tsSocketType_TCP), mProcID(procID), mTickQueue(tickFactory)
+tsTickReceiver::tsTickReceiver(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID)
+  : mStore(store), mSocket(tsSocketType_TCP), mProcID(procID), mTickQueue(tickFactory)
 {
     mSocket.setSocketDescriptor(socketFD);
     start();
 }
 
-tsTickProc::~tsTickProc()
+tsTickReceiver::~tsTickReceiver()
 {
 }
 
-void* tsTickProc::run()
+void* tsTickReceiver::run()
 {
     bbUINT qfullDelayMs = 32;
     bool connected = true;
@@ -69,7 +70,7 @@ void* tsTickProc::run()
                         printf("%s %d: receive queue deadlock detected, discarding %u bytes\n", __FUNCTION__, mProcID, mTickQueue.size());
                         mTickQueue.flush();
                     }
-                    break;
+                    break; // not enough data in q to deserialize a tick
                 }
                 Proc(pRawTick, frontSize);
                 mTickQueue.pop(frontSize);
@@ -87,7 +88,7 @@ void* tsTickProc::run()
     return NULL;
 }
 
-void tsTickProc::Proc(const char* pRawTick, bbUINT tickSize)
+void tsTickReceiver::Proc(const char* pRawTick, bbUINT tickSize)
 {
     tsTickUnion tickUnion;
     mStore.tickFactory().unserialize(pRawTick, &static_cast<tsTick&>(tickUnion));
@@ -97,26 +98,21 @@ void tsTickProc::Proc(const char* pRawTick, bbUINT tickSize)
         tsTickDiag& tickDiag = static_cast<tsTickDiag&>(static_cast<tsTick&>(tickUnion));
         tickDiag.setReceiveTime(tsTime::currentTimestamp());
 
-        std::cout << mStore.tickFactory().str(tickDiag) << std::endl;
-        printf("diag %d latency %d ms (%s - %s) %d ms\n", tickDiag.count(),
-                                                    (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000),
-                                                    tsTime(tickDiag.receiveTime()).str().c_str(), tsTime(tickDiag.time()).str().c_str(),
-                                                    (int)(((bbS64)tickDiag.sendTime() - (bbS64)tickDiag.time())/1000000));
+        std::cout << mStore.tickFactory().str(tickDiag)
+                  << strprintf(" latency send %d ms, receive %d ms",
+                               (int)(((bbS64)tickDiag.sendTime() - (bbS64)tickDiag.time())/1000000),
+                               (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000))
+                  << std::endl;
     }
 
     try
     {
         mStore.SaveTick(pRawTick, tickSize);
-        Proc(tickUnion);
         mTicksReceived++;
     }
     catch (tsStoreException& e)
     {
         std::cout << __FUNCTION__ << ": " << e.what();
     }
-}
-
-void tsTickProc::Proc(const tsTick& tick)
-{
 }
 

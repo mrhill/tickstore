@@ -5,7 +5,8 @@
 
 /** Tick Queue.
     Provides mutex-less but thread-save mechanism to pass serialized tsTick's between
-    one producer and one consumer thread.
+    one producer and one consumer thread. Can also be used as a in-place circular buffer to
+    send or receive ticks over a socket or file descriptor.
 */
 class tsTickQueue
 {
@@ -92,7 +93,7 @@ public:
         mRd = mWr;
     }
 
-    friend class tsTickProc;
+    friend class tsTickReceiver;
 };
 
 #endif
