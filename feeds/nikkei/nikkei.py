@@ -28,12 +28,27 @@ def parsePage(sender, page):
 		print tick
 		sender.send(tick)
 
+	latestFile = open("latest.txt","w")
+	latestFile.write(latest.isoformat())
+	latestFile.close()
+
+
 sender = tsTickSender()
 
 fetchDir = "data"
 mkdir(fetchDir)
 
 latest = datetime.datetime(1860,1,1)
+try:
+	latestFile = open("latest.txt")
+	latest = datetime.datetime.strptime(latestFile.read(), "%Y-%m-%dT%H:%M:%S" )
+	latestFile.close()
+except IOError:
+	pass
+except ValueError:
+	pass
+print latest
+
 replay = len(sys.argv) != 1
 
-pollUrl(sender, "http://indexes.nikkei.co.jp/nkave/historical/nikkei_stock_average_daily_en.csv", 10, fetchDir, replay, parsePage)
+pollUrl(sender, "http://indexes.nikkei.co.jp/nkave/historical/nikkei_stock_average_daily_en.csv", 3600, fetchDir, replay, parsePage)
