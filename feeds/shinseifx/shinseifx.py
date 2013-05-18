@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
 import sys, datetime
-from BeautifulSoup import BeautifulSoup
 sys.path.append("../../libts")
-from pyts import *
 sys.path.append("..")
 from pytsutil import *
+from pyts import *
+from BeautifulSoup import BeautifulSoup
 
 groups = [ 'Regular', 'Gold', 'Platinum' ]
 
@@ -51,27 +51,10 @@ def parsePage(sender, page):
                     ask=float(s)
                     list.append( (symbol, bid, ask) )
 
-fetchDir = "data"
-try:
-    os.mkdir(fetchDir)
-except:
-    pass
-
-replay = len(sys.argv) != 1
-loop = 0
-
 sender = tsTickSender()
 
-if replay:
-    for root, dirs, files in os.walk(fetchDir):
-        for name in files:
-            print loop, name
-            page = open(os.path.join(root, name)).read()
-            parsePage(sender, page)
-            loop += 1
-else:
-    poll = HttpPoll("http://sre.shinseibank.com/InterestRateB/FXRate_EN.aspx")
-    while True:
-        page = poll.pollHttp()
-        if page: parsePage(sender, page)
-        time.sleep(90)
+fetchDir = "data"
+mkdir(fetchDir)
+
+replay = len(sys.argv) != 1
+pollUrl(sender, "http://sre.shinseibank.com/InterestRateB/FXRate_EN.aspx", 90, fetchDir, replay, parsePage)

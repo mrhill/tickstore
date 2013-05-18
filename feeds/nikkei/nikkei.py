@@ -2,18 +2,19 @@
 # -*- coding: utf-8 -*-
 
 import sys, datetime
-from BeautifulSoup import BeautifulSoup
 sys.path.append("../../libts")
-from pyts import *
 sys.path.append("..")
+from pyts import *
 from pytsutil import *
 
 def parsePage(sender, page):
-
+	global latest
 	for line in page.split("\n"):
 		fields = line.replace('"','').strip("\n\r").split(",")
 		try:
 			date = datetime.datetime.strptime(fields[0], "%Y/%m/%d")
+			if date <= latest: continue
+			latest = date
 			priceClose = float(fields[1])
 			priceOpen = float(fields[2])
 			priceHi = float(fields[3])
@@ -27,27 +28,12 @@ def parsePage(sender, page):
 		print tick
 		sender.send(tick)
 
-
-fetchDir = "data"
-try:
-    os.mkdir(fetchDir)
-except:
-    pass
-
 sender = tsTickSender()
 
+fetchDir = "data"
+mkdir(fetchDir)
+
+latest = datetime.datetime(1860,1,1)
 replay = len(sys.argv) != 1
-loop = 0
-if replay:
-    for root, dirs, files in os.walk(fetchDir):
-        for name in files:
-            print loop, name
-            page = open(os.path.join(root, name)).read()
-            parsePage(sender, page)
-            loop+=1
-else:
-	poll = HttpPoll("http://indexes.nikkei.co.jp/nkave/historical/nikkei_stock_average_daily_en.csv", "csv")
-	while True:
-	    page = poll.pollHttp()
-	    if page: parsePage(sender, page)
-	    time.sleep(3600)
+
+pollUrl(sender, "http://indexes.nikkei.co.jp/nkave/historical/nikkei_stock_average_daily_en.csv", 10, fetchDir, replay, parsePage)
