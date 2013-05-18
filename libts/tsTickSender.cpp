@@ -113,12 +113,10 @@ void tsTickSender::sendDiagTick()
 
 void tsTickSender::send(tsTick& tick)
 {
-    mTickQueueWriteMutex.lock();
+    tsMutexLocker lock(mTickQueueWriteMutex);
 
     if (!(mTickCount & 63))
         sendDiagTick();
     sendUnprotected(tick);
-
-    mTickQueueWriteMutex.unlock();
 }
 

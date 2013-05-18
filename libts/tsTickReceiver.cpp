@@ -90,6 +90,8 @@ void* tsTickReceiver::run()
 
 void tsTickReceiver::Proc(const char* pRawTick, bbUINT tickSize)
 {
+    mTicksReceived++;
+
     tsTickUnion tickUnion;
     mStore.tickFactory().unserialize(pRawTick, &static_cast<tsTick&>(tickUnion));
 
@@ -104,15 +106,16 @@ void tsTickReceiver::Proc(const char* pRawTick, bbUINT tickSize)
                                (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000))
                   << std::endl;
     }
-
-    try
+    else
     {
-        mStore.SaveTick(pRawTick, tickSize);
-        mTicksReceived++;
-    }
-    catch (tsStoreException& e)
-    {
-        std::cout << __FUNCTION__ << ": " << e.what();
+        try
+        {
+            mStore.SaveTick(pRawTick, tickSize);
+        }
+        catch (tsStoreException& e)
+        {
+            std::cout << __FUNCTION__ << ": " << e.what();
+        }
     }
 }
 

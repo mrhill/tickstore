@@ -22,23 +22,23 @@ class tsStoreMySQL : public tsStore
         char  mEscRawTick[tsTick::SERIALIZEDMAXSIZE*2 + 1];
     };
 
-    struct Exchange
+    struct Feed
     {
-        bbU32       mExchangeID;
+        bbU64       mFeedID;
         MYSQL_STMT* mInsertStmt;
         MYSQL_BIND  mInsertParam[5];
 
-        Exchange(tsStoreMySQL& parent, bbU32 exchangeID);
-        ~Exchange();
+        Feed(tsStoreMySQL& parent, bbU64 feedID);
+        ~Feed();
     };
 
-    typedef std::map<bbU32, Exchange*> ExchangeMap;
-    ExchangeMap mExchangeMap;
+    typedef std::map<bbU64, Feed*> FeedMap;
+    FeedMap mFeedMap;
     InsertParam mInsertParam;
 
-    void CreateExchangeTable(bbU32 exchangeID);
-    Exchange* GetExchange(bbU32 exchangeID);
-    void InsertTick(Exchange* pExchange, tsTick& tick, const char* pRawTick, bbUINT tickSize);
+    void CreateFeedTable(bbU64 feedID);
+    Feed* GetFeed(bbU64 feedID);
+    void InsertTick(Feed* pFeed, tsTick& tick, const char* pRawTick, bbUINT tickSize);
 
 public:
     tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName);

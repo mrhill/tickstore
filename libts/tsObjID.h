@@ -8,21 +8,21 @@
 
 class tsObjID
 {
+    bbU64 mFeedID;
     bbU64 mSymbolID;
-    bbU32 mExchangeID;
 
 public:
-    tsObjID(bbU32 exchangeID=0, bbU64 symbolID=0) : mExchangeID(exchangeID), mSymbolID(symbolID) {}
+    tsObjID(bbU64 feedID=0, bbU64 symbolID=0) : mFeedID(feedID), mSymbolID(symbolID) {}
 
-    inline void  setExchangeID(bbU32 exchangeID) { mExchangeID = exchangeID; }
-    inline bbU32 exchangeID() const { return mExchangeID; }
+    inline void  setFeedID(bbU64 feedID) { mFeedID = feedID; }
+    inline bbU64 feedID() const { return mFeedID; }
 
     inline void  setSymbolID(bbU64 symbolID) { mSymbolID = symbolID; }
     inline bbU64 symbolID() const { return mSymbolID; }
 
     inline bool operator<(const tsObjID& other) const
     {
-        return (mExchangeID <= other.mExchangeID) && (mSymbolID < other.mSymbolID);
+        return (mFeedID <= other.mFeedID) && (mSymbolID < other.mSymbolID);
     }
 
     std::string str() const;

@@ -26,31 +26,28 @@ tsStoreMySQL::tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName)
 
 tsStoreMySQL::~tsStoreMySQL()
 {
-    for (ExchangeMap::iterator it = mExchangeMap.begin(); it != mExchangeMap.end(); it++)
+    for (FeedMap::iterator it = mFeedMap.begin(); it != mFeedMap.end(); it++)
         delete it->second;
 
     printf("%s: Closing MySQL connection\n", __FUNCTION__);
     mysql_close(mCon);
 }
 
-void tsStoreMySQL::CreateExchangeTable(bbU32 exchangeID)
+void tsStoreMySQL::CreateFeedTable(bbU64 feedID)
 {
-    char tableName[12];
-    snprintf(tableName, 12, "x%08X", exchangeID);
-
     bbStrBuf sql;
-    sql.Printf("CREATE TABLE IF NOT EXISTS %s ("
+    sql.Printf("CREATE TABLE IF NOT EXISTS x%08X%08X ("
                    "id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY,"
                    "sym BIGINT UNSIGNED NOT NULL DEFAULT 0,"
                    "tt SMALLINT UNSIGNED NOT NULL DEFAULT 0,"
                    "count INT UNSIGNED NOT NULL DEFAULT 0,"
                    "time BIGINT UNSIGNED NOT NULL DEFAULT 0,"
-                   "data VARBINARY(%u) NOT NULL DEFAULT '')", tableName, tsTick::SERIALIZEDMAXSIZE);
+                   "data VARBINARY(%u) NOT NULL DEFAULT '')", (bbU32)(feedID>>32), (bbU32)feedID, tsTick::SERIALIZEDMAXSIZE);
 
     if (mysql_query(mCon, sql.GetPtr()))
         throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
     else
-        printf("%s: Created exchange table %s\n", __FUNCTION__, tableName);
+        printf("%s: Created exchange table x%08X%08X\n", __FUNCTION__, (bbU32)(feedID>>32), (bbU32)feedID);
 }
 
 enum INSERTPARAM
@@ -63,14 +60,14 @@ enum INSERTPARAM
     INSERTPARAMCOUNT
 };
 
-tsStoreMySQL::Exchange::Exchange(tsStoreMySQL& parent, bbU32 exchangeID) : mExchangeID(exchangeID)
+tsStoreMySQL::Feed::Feed(tsStoreMySQL& parent, bbU64 feedID) : mFeedID(feedID)
 {
     mInsertStmt = mysql_stmt_init(parent.mCon);
     if (!mInsertStmt)
         throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(parent.mCon)));
 
     bbStrBuf query;
-    query.Printf("INSERT INTO x%08X (sym,tt,count,time,data) VALUES (?,?,?,?,?)", exchangeID);
+    query.Printf("INSERT INTO x%08X%08X (sym,tt,count,time,data) VALUES (?,?,?,?,?)", (bbU32)(feedID>>32), (bbU32)feedID);
 
     if (mysql_stmt_prepare(mInsertStmt, query.GetPtr(), query.GetLen()))
         throw std::runtime_error(strprintf("%s: mysql_stmt_prepare() '%s' failed, %d %s\n", __FUNCTION__,
@@ -105,26 +102,26 @@ tsStoreMySQL::Exchange::Exchange(tsStoreMySQL& parent, bbU32 exchangeID) : mExch
         throw std::runtime_error(strprintf("%s: mysql_stmt_bind_param() failed, %s\n", __FUNCTION__, mysql_error(parent.mCon)));
 }
 
-tsStoreMySQL::Exchange::~Exchange()
+tsStoreMySQL::Feed::~Feed()
 {
     if (mInsertStmt)
         mysql_stmt_close(mInsertStmt);
 }
 
-tsStoreMySQL::Exchange* tsStoreMySQL::GetExchange(bbU32 exchangeID)
+tsStoreMySQL::Feed* tsStoreMySQL::GetFeed(bbU64 feedID)
 {
-    ExchangeMap::const_iterator it = mExchangeMap.find(exchangeID);
-    if (it == mExchangeMap.end())
+    FeedMap::const_iterator it = mFeedMap.find(feedID);
+    if (it == mFeedMap.end())
     {
-        CreateExchangeTable(exchangeID);
-        Exchange* pExchange = new Exchange(*this, exchangeID);
-        mExchangeMap.insert(std::pair<bbU32, Exchange*>(exchangeID, pExchange));
-        return pExchange;
+        CreateFeedTable(feedID);
+        Feed* pFeed = new Feed(*this, feedID);
+        mFeedMap.insert(std::pair<bbU64, Feed*>(feedID, pFeed));
+        return pFeed;
     }
     return it->second;
 }
 
-void tsStoreMySQL::InsertTick(tsStoreMySQL::Exchange* pExchange, tsTick& tick, const char* pRawTick, bbUINT tickSize)
+void tsStoreMySQL::InsertTick(tsStoreMySQL::Feed* pFeed, tsTick& tick, const char* pRawTick, bbUINT tickSize)
 {
     mInsertParam.mSym   = tick.objID().symbolID();
     mInsertParam.mTT    = tick.type();
@@ -132,7 +129,7 @@ void tsStoreMySQL::InsertTick(tsStoreMySQL::Exchange* pExchange, tsTick& tick, c
     mInsertParam.mTime  = tick.time();
     mInsertParam.mEscRawTickLength = mysql_real_escape_string(mCon, mInsertParam.mEscRawTick, pRawTick, tickSize);
 
-    if (mysql_stmt_execute(pExchange->mInsertStmt))
+    if (mysql_stmt_execute(pFeed->mInsertStmt))
         throw tsStoreException(strprintf("%s: mysql_stmt_execute() failed, %s\n", __FUNCTION__, mysql_error(mCon)));
 }
 
@@ -146,7 +143,7 @@ void tsStoreMySQL::SaveTick(const char* pRawTick, bbUINT tickSize)
 
     tsMutexLocker lock(mMutex);
 
-    Exchange* pExchange = GetExchange(tick.mObjID.exchangeID());
-    InsertTick(pExchange, tick, pRawTick, tickSize);
+    Feed* pFeed = GetFeed(tick.mObjID.feedID());
+    InsertTick(pFeed, tick, pRawTick, tickSize);
 }
 
