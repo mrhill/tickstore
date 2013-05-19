@@ -1,14 +1,44 @@
+#include <string>
+#include <iostream>
 #include <boost/python.hpp>
 #include "tsTime.h"
 #include "tsTickSender.h"
 #include "tsTickFinance.h"
 
+using namespace boost::python;
+
 static tsTickFactoryFinance tickFactoryFinance;
 
 struct tsTickSenderFinance : public tsTickSender
 {
-    tsTickSenderFinance() : tsTickSender(tickFactoryFinance, "localhost", 2227) {}
-    tsTickSenderFinance(const char* host, int port = 2227) : tsTickSender(tickFactoryFinance, host, port) {}
+    static std::string getScriptName()
+    {
+        object main = import("__main__");
+        object main_file(main.attr("__file__"));
+        std::string s = extract<std::string>(main_file);
+
+        size_t pos = s.rfind("/");
+        if (pos != std::string::npos)
+            s.erase(0, pos+1);
+
+        if (s.find_first_of(".py", s.size()-3) != std::string::npos)
+            s.erase(s.size()-3);
+
+        return s;
+    }
+
+    tsTickSenderFinance()
+      : tsTickSender(tickFactoryFinance, getScriptName().c_str(), "localhost", 2227)
+    {
+    }
+
+    tsTickSenderFinance(const char* host, int port = 2227)
+      : tsTickSender(tickFactoryFinance, getScriptName().c_str(), host, port)
+    {}
+
+    tsTickSenderFinance(const char* queueName, const char* host, int port = 2227)
+      : tsTickSender(tickFactoryFinance, queueName, host, port)
+    {}
 };
 
 bbU64 symFromStr(char const* pStr)
@@ -23,7 +53,6 @@ bbU64 symFromStr(char const* pStr)
 
 BOOST_PYTHON_MODULE(pyts)
 {
-    using namespace boost::python;
     using self_ns::str;
 
     def("symFromStr", symFromStr);
@@ -62,7 +91,8 @@ BOOST_PYTHON_MODULE(pyts)
     #include "tsTickFinance.cxx"
 
     class_<tsTickSenderFinance>("tsTickSender")
-        .def(init<const char*, int>())
+        .def(init<const char*, const char*, int>())
         .def("send", &tsTickSender::send)
     ;
 }
+

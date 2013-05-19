@@ -3,16 +3,23 @@
 #include <string.h>
 #include <stdexcept>
 
-tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, bbUINT bufsize) : mTickFactory(tickFactory), mpBuf(NULL), mSize(bufsize), mRd(0), mWr(0)
+tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName, bbUINT bufsize)
+  : mTickFactory(tickFactory), mpBuf(NULL), mSize(bufsize), mRd(0), mWr(0), mLogFD(NULL)
 {
     if (!bbIsPwr2(bufsize))
         throw std::runtime_error(strprintf("%s: queue buffer size %d is not power of 2\n", __FUNCTION__, bufsize));
 
     mpBuf = new char[bufsize];
+
+    if (pQueueName)
+        mLogFD = fopen((std::string(pQueueName)+".q.dat").c_str(), "ab");
 }
 
 tsTickQueue::~tsTickQueue()
 {
+    if (mLogFD)
+        fclose(mLogFD);
+
     delete[] mpBuf;
 }
 
@@ -29,6 +36,9 @@ bool tsTickQueue::push(const tsTick& tick)
     if ((mWr+tickSize) <= mSize)
     {
         mTickFactory.serialize(tick, mpBuf + wr);
+
+        if (mLogFD)
+            fwrite(mpBuf + wr, tickSize, 1, mLogFD);
     }
     else
     {
@@ -39,6 +49,9 @@ bool tsTickQueue::push(const tsTick& tick)
 
         memcpy(mpBuf + wr, wrapBuf, firsPart);
         memcpy(mpBuf, wrapBuf + firsPart, tickSize-firsPart);
+
+        if (mLogFD)
+            fwrite(wrapBuf, tickSize, 1, mLogFD);
     }
 
     mWr = (wr + tickSize) & (mSize-1);

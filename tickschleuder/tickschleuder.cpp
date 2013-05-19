@@ -25,7 +25,7 @@ class TestSendThread : public tsThread
 
         try
         {
-            tsTickSender sender(factory, "localhost");
+            tsTickSender sender(factory, "tickschleuder", "localhost");
 
             for (int i=0; i<1000; i++)
             {

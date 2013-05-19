@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 
     try
     {
-        tsTickSender sender(factory, "localhost");
+        tsTickSender sender(factory, "tstest", "localhost");
 
         for (int i=0; i<1000; i++)
         {

@@ -7,8 +7,10 @@ sys.path.append("..")
 from pyts import *
 from pytsutil import *
 
+latestFilename = "latest.txt"
+
 def parsePage(sender, page):
-	global latest
+	global latest, latestFile
 	for line in page.split("\n"):
 		fields = line.replace('"','').strip("\n\r").split(",")
 		try:
@@ -28,7 +30,7 @@ def parsePage(sender, page):
 		print tick
 		sender.send(tick)
 
-	latestFile = open("latest.txt","w")
+	latestFile = open(latestFilename,"w")
 	latestFile.write(latest.isoformat())
 	latestFile.close()
 
@@ -40,14 +42,15 @@ mkdir(fetchDir)
 
 latest = datetime.datetime(1860,1,1)
 try:
-	latestFile = open("latest.txt")
+	print "Reading", latestFilename, "...",
+	latestFile = open(latestFilename)
 	latest = datetime.datetime.strptime(latestFile.read(), "%Y-%m-%dT%H:%M:%S" )
 	latestFile.close()
 except IOError:
 	pass
 except ValueError:
 	pass
-print latest
+print "skipping until", latest
 
 replay = len(sys.argv) != 1
 

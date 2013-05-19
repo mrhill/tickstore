@@ -2,6 +2,7 @@
 #define tsTICKQUEUE_H
 
 #include "tsTick.h"
+#include <stdio.h>
 
 /** Tick Queue.
     Provides mutex-less but thread-save mechanism to pass serialized tsTick's between
@@ -15,6 +16,7 @@ class tsTickQueue
     bbUINT  mRd;                    //!< Current read offset
     bbUINT  mWr;                    //!< Current write offset
     bbUINT  mSize;                  //!< Size of queue buffer, must be power of 2
+    FILE*   mLogFD;
     char    mWrapBuf[tsTick::SERIALIZEDMAXSIZE]; //!< Temp buffer to handle wraps
 
 public:
@@ -26,7 +28,7 @@ public:
         bbUINT sizeSecond;
     };
 
-    tsTickQueue(tsTickFactory& tickFactory, bbUINT bufsize = 8192);
+    tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName = NULL, bbUINT bufsize = 8192);
     ~tsTickQueue();
 
     /** Test if queue is empty.

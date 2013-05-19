@@ -77,8 +77,9 @@ void* tsTickSender::run()
     return NULL;
 }
 
-tsTickSender::tsTickSender(tsTickFactory& tickFactory, const char* pHostName, int port)
-  : mTickCount(0), mLogLevel(2), mSocket(tsSocketType_TCP), mTickQueue(tickFactory), mHostName(pHostName), mPort(port)
+tsTickSender::tsTickSender(tsTickFactory& tickFactory, const char* pQueueName, const char* pHostName, int port)
+  : mTickCount(0), mLogLevel(2), mSocket(tsSocketType_TCP),
+    mTickQueue(tickFactory, pQueueName), mHostName(pHostName), mPort(port)
 {
     tsThread::start();
 }
