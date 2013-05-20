@@ -10,7 +10,7 @@ from pytsutil import *
 latestFilename = "latest.txt"
 
 def parsePage(sender, page):
-	global latest, latestFile
+	global latest, latestFilename
 	for line in page.split("\n"):
 		fields = line.replace('"','').strip("\n\r").split(",")
 		try:

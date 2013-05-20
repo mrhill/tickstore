@@ -91,6 +91,7 @@ BOOST_PYTHON_MODULE(pyts)
     #include "tsTickFinance.cxx"
 
     class_<tsTickSenderFinance>("tsTickSender")
+        .def(init<const char*, int>())
         .def(init<const char*, const char*, int>())
         .def("send", &tsTickSender::send)
     ;
