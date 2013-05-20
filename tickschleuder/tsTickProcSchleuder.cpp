@@ -31,6 +31,7 @@ void tsTickProcSchleuder::Proc(const char* pRawTick, bbUINT tickSize)
     }
     else if (mInFilter.isAllowed(static_cast<const tsTick&>(tickUnion).objID().feedID()))
     {
+        mInFilter.mLastFeedIDCache = static_cast<const tsTick&>(tickUnion).objID().feedID();
         try
         {
             mStore.SaveTick(pRawTick, tickSize);
