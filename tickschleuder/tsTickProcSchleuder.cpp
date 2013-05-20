@@ -7,6 +7,9 @@ tsTickProcSchleuder::tsTickProcSchleuder(tsTickFactory& tickFactory, tsStore& st
     mStore(store),
     mGroup(group & 255)
 {
+    mInFilter.AddFeed(400);
+    mInFilter.AddFeed(29);
+    mInFilter.AddFeed(0x42);
 }
 
 void tsTickProcSchleuder::Proc(const char* pRawTick, bbUINT tickSize)
@@ -26,7 +29,7 @@ void tsTickProcSchleuder::Proc(const char* pRawTick, bbUINT tickSize)
                                (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000))
                   << std::endl;
     }
-    else
+    else if (mInFilter.isAllowed(static_cast<const tsTick&>(tickUnion).objID().feedID()))
     {
         try
         {
