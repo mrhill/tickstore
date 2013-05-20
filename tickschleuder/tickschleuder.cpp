@@ -63,7 +63,7 @@ int main(int argc, char** argv)
         while (true)
         {
             int newSocket = listenSocket.accept();
-            tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID));
+            tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID, 0));
         }
     }
     catch(std::exception& e)

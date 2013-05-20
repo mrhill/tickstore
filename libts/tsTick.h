@@ -97,9 +97,9 @@ class tsTickFactory
 protected:
     virtual int  serializedTailSize(const tsTick& tick) const;
     virtual void serializeTail(const tsTick* pTick, char* pBuf) const;
-    virtual void unserializeTail(const char* pBuf, tsTick* pTick) const;
     virtual std::string strTail(const tsTick* pTick) const;
 public:
+    virtual void unserializeTail(const char* pBuf, tsTick* pTick) const;
     int         serializedSize(const tsTick& tick) const { return serializedTailSize(tick) + tsTick::SERIALIZEDHEADSIZE; }
     void        serialize(const tsTick& tick, char* pBuf) const;
     int         unserialize(const char* pBuf, tsTick* pTick) const;

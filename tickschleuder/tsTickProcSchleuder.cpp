@@ -2,13 +2,21 @@
 #include "tsTickFinance.h"
 #include <iostream>
 
+tsTickProcSchleuder::tsTickProcSchleuder(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID, bbUINT group)
+  : tsTickReceiver(tickFactory, socketFD, procID),
+    mStore(store),
+    mGroup(group & 255)
+{
+}
+
 void tsTickProcSchleuder::Proc(const char* pRawTick, bbUINT tickSize)
 {
     tsTickUnion tickUnion;
-    mStore.tickFactory().unserialize(pRawTick, &static_cast<tsTick&>(tickUnion));
+    int headSize = static_cast<tsTick&>(tickUnion).unserializeHead(pRawTick);
 
     if (static_cast<const tsTick&>(tickUnion).type() == tsTickType_Diag)
     {
+        mStore.tickFactory().unserializeTail(pRawTick + headSize, &static_cast<tsTick&>(tickUnion));
         tsTickDiag& tickDiag = static_cast<tsTickDiag&>(static_cast<tsTick&>(tickUnion));
         tickDiag.setReceiveTime(tsTime::currentTimestamp());
 

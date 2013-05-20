@@ -10,14 +10,14 @@
 class tsTickProcSchleuder : public tsTickReceiver
 {
     tsStore&    mStore;
+    bbUINT      mGroup;
+
+
 
     typedef std::map<tsObjID, tsMonSymbol*> ObjIDMonMap;
     ObjIDMonMap mObjID2Mon;
 public:
-    tsTickProcSchleuder(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID)
-      : tsTickReceiver(tickFactory, socketFD, procID), mStore(store)
-    {
-    }
+    tsTickProcSchleuder(tsTickFactory& tickFactory, tsStore& store, int socketFD, int procID, bbUINT group);
 
     tsMonSymbol* GetMon(const tsObjID& objID);
 
