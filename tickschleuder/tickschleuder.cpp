@@ -3,6 +3,7 @@
 #include "tsThread.h"
 #include "tsTickSender.h"
 #include "tsTickFinance.h"
+#include "tsTickProcSchleuder.h"
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -12,12 +13,12 @@ class TestSendThread : public tsThread
 {
     virtual void* run()
     {
+        msleep(2000);
         tsTickFactoryFinance factory;
 
         bbU64 sym = 0xDEADDEADUL;
         sym = (sym<<32) | 0xF00DF00DUL;
         tsObjID objID(0xE400002E, sym);
-        tsTick tick;
 
         std::cout << tsTime::current().str() << std::endl;
 
@@ -27,9 +28,9 @@ class TestSendThread : public tsThread
         {
             tsTickSender sender(factory, "tickschleuder", "localhost");
 
-            for (int i=0; i<1000; i++)
+            for (int i=0; i<100; i++)
             {
-                sender << tick << priceTick;
+                sender << priceTick;
                 priceTick.setPrice(i);
                 priceTick.setVolume(1<<(i&63));
             }
@@ -46,14 +47,14 @@ class TestSendThread : public tsThread
 int main(int argc, char** argv)
 {
     tsTickFactoryFinance factory;
-    //TestSendThread sender;
-    //sender.start();
+    TestSendThread sender;
+    sender.start();
 
     int procID = 0;
     try
     {
         std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_MySQL, "ticks"));
-        tsVecManagedPtr<tsTickReceiver> tickProcessors;
+        tsVecManagedPtr<tsTickProcSchleuder> tickProcessors;
 
         int port = 2227;
         std::cout << __FUNCTION__ << ": listening for connections on port " << port << std::endl;
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
         while (true)
         {
             int newSocket = listenSocket.accept();
-            tickProcessors.push_back(new tsTickReceiver(factory, *pTickerStore, newSocket, ++procID));
+            tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID));
         }
     }
     catch(std::exception& e)
@@ -70,7 +71,7 @@ int main(int argc, char** argv)
         std::cout << e.what();
     }
 
-    //sender.join();
+    sender.join();
     return 0;
 }
 

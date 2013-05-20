@@ -1,5 +1,35 @@
 #include "tsTickProcSchleuder.h"
 #include "tsTickFinance.h"
+#include <iostream>
+
+void tsTickProcSchleuder::Proc(const char* pRawTick, bbUINT tickSize)
+{
+    tsTickUnion tickUnion;
+    mStore.tickFactory().unserialize(pRawTick, &static_cast<tsTick&>(tickUnion));
+
+    if (static_cast<const tsTick&>(tickUnion).type() == tsTickType_Diag)
+    {
+        tsTickDiag& tickDiag = static_cast<tsTickDiag&>(static_cast<tsTick&>(tickUnion));
+        tickDiag.setReceiveTime(tsTime::currentTimestamp());
+
+        std::cout << mStore.tickFactory().str(tickDiag)
+                  << strprintf(" latency send %d ms, receive %d ms",
+                               (int)(((bbS64)tickDiag.sendTime() - (bbS64)tickDiag.time())/1000000),
+                               (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000))
+                  << std::endl;
+    }
+    else
+    {
+        try
+        {
+            mStore.SaveTick(pRawTick, tickSize);
+        }
+        catch (tsStoreException& e)
+        {
+            std::cout << __FUNCTION__ << ": " << e.what();
+        }
+    }
+}
 
 tsMonSymbol* tsTickProcSchleuder::GetMon(const tsObjID& objID)
 {
