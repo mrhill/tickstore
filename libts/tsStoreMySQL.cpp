@@ -1,6 +1,7 @@
 #include "tsStoreMySQL.h"
+#include "tsHash.h"
 #include <stdio.h>
-#include <stdexcept>
+#include <stdlib.h>
 #include <babel/StrBuf.h>
 
 tsStoreMySQL::tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName)
@@ -10,18 +11,20 @@ tsStoreMySQL::tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName)
 
     mCon = mysql_init(NULL);
     if (!mCon)
-        throw std::runtime_error(strprintf("%s: Error on mysql_init()\n", __FUNCTION__));
+        throw tsStoreException(strprintf("%s: Error on mysql_init()\n", __FUNCTION__));
 
     if (!mysql_real_connect(mCon, "localhost", "", "", NULL, 0, NULL, 0))
-        throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
+        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
 
     printf("%s: MySQL host: %s\n", __FUNCTION__, mysql_get_host_info(mCon));
 
     if (mysql_query(mCon, strprintf("CREATE DATABASE IF NOT EXISTS %s", pDBName).c_str()) ||
         mysql_select_db(mCon, pDBName))
-        throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
+        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
     else
         printf("Selected database %s\n", pDBName);
+
+    CreateUserTable();
 }
 
 tsStoreMySQL::~tsStoreMySQL()
@@ -31,6 +34,32 @@ tsStoreMySQL::~tsStoreMySQL()
 
     printf("%s: Closing MySQL connection\n", __FUNCTION__);
     mysql_close(mCon);
+}
+
+void tsStoreMySQL::CreateUserTable()
+{
+    bbStrBuf sql;
+    sql.Printf("CREATE TABLE IF NOT EXISTS user ("
+                   "id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY,"
+                   "pwd BINARY(32) NOT NULL DEFAULT '',"
+                   "salt BINARY(32) NOT NULL DEFAULT '',"
+                   "name VARCHAR(256) NOT NULL DEFAULT '')");
+
+    if (mysql_query(mCon, sql.GetPtr()))
+        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
+    else
+        printf("%s: Created user table\n", __FUNCTION__);
+
+    sql.Printf("CREATE TABLE IF NOT EXISTS feed ("
+                   "id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY,"
+                   "uid BIGINT UNSIGNED NOT NULL DEFAULT 0,"
+                   "name VARCHAR(256) NOT NULL DEFAULT '',"
+                   "FOREIGN KEY (id) REFERENCES user(id))");
+
+    if (mysql_query(mCon, sql.GetPtr()))
+        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
+    else
+        printf("%s: Created feed table\n", __FUNCTION__);
 }
 
 void tsStoreMySQL::CreateFeedTable(bbU64 feedID)
@@ -45,7 +74,7 @@ void tsStoreMySQL::CreateFeedTable(bbU64 feedID)
                    "data VARBINARY(%u) NOT NULL DEFAULT '')", (bbU32)(feedID>>32), (bbU32)feedID, tsTick::SERIALIZEDMAXSIZE);
 
     if (mysql_query(mCon, sql.GetPtr()))
-        throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
+        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
     else
         printf("%s: Created exchange table x%08X%08X\n", __FUNCTION__, (bbU32)(feedID>>32), (bbU32)feedID);
 }
@@ -64,13 +93,13 @@ tsStoreMySQL::Feed::Feed(tsStoreMySQL& parent, bbU64 feedID) : mFeedID(feedID)
 {
     mInsertStmt = mysql_stmt_init(parent.mCon);
     if (!mInsertStmt)
-        throw std::runtime_error(strprintf("%s: %s\n", __FUNCTION__, mysql_error(parent.mCon)));
+        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(parent.mCon)));
 
     bbStrBuf query;
     query.Printf("INSERT INTO x%08X%08X (sym,tt,count,time,data) VALUES (?,?,?,?,?)", (bbU32)(feedID>>32), (bbU32)feedID);
 
     if (mysql_stmt_prepare(mInsertStmt, query.GetPtr(), query.GetLen()))
-        throw std::runtime_error(strprintf("%s: mysql_stmt_prepare() '%s' failed, %d %s\n", __FUNCTION__,
+        throw tsStoreException(strprintf("%s: mysql_stmt_prepare() '%s' failed, %d %s\n", __FUNCTION__,
             query.GetPtr(), mysql_errno(parent.mCon), mysql_error(parent.mCon)));
 
     bbASSERT(mysql_stmt_param_count(mInsertStmt) == INSERTPARAMCOUNT);
@@ -99,7 +128,7 @@ tsStoreMySQL::Feed::Feed(tsStoreMySQL& parent, bbU64 feedID) : mFeedID(feedID)
     mInsertParam[INSERTPARAM_DATA].length = &parent.mInsertParam.mEscRawTickLength;
 
     if (mysql_stmt_bind_param(mInsertStmt, mInsertParam))
-        throw std::runtime_error(strprintf("%s: mysql_stmt_bind_param() failed, %s\n", __FUNCTION__, mysql_error(parent.mCon)));
+        throw tsStoreException(strprintf("%s: mysql_stmt_bind_param() failed, %s\n", __FUNCTION__, mysql_error(parent.mCon)));
 }
 
 tsStoreMySQL::Feed::~Feed()
@@ -145,5 +174,98 @@ void tsStoreMySQL::SaveTick(const char* pRawTick, bbUINT tickSize)
 
     Feed* pFeed = GetFeed(tick.mObjID.feedID());
     InsertTick(pFeed, tick, pRawTick, tickSize);
+}
+
+
+tsStoreMySQL::Query::Query(MYSQL* pCon, const char* sql) : mCon(pCon), mResult(NULL)
+{
+    if (sql)
+        Exec(sql);
+}
+
+void tsStoreMySQL::Query::Clear()
+{
+    if (mResult)
+        mysql_free_result(mResult);
+    mResult = NULL;
+}
+
+void tsStoreMySQL::Query::Exec(const char* sql)
+{
+    Clear();
+
+    if (mysql_query(mCon, sql))
+        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
+
+    mResult = mysql_store_result(mCon);
+    if (!mResult)
+        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
+}
+
+MYSQL_ROW tsStoreMySQL::Query::FetchRow()
+{
+    MYSQL_ROW row = mysql_fetch_row(mResult);
+    mLengths = mysql_fetch_lengths(mResult);
+    return row;
+}
+
+MYSQL_ROW tsStoreMySQL::Query::ExecAndFetchRow(const char* sql)
+{
+    Exec(sql);
+    return FetchRow();
+}
+
+bbU64 tsStoreMySQL::Authenticate(bbU64 uid, const bbU8* pPwd)
+{
+    tsMutexLocker lock(mMutex);
+
+    bbStrBuf sql;
+    sql.Printf("SELECT pwd,salt FROM user WHERE id=%"bbI64"u", uid);
+    Query q(mCon, sql.GetPtr());
+
+    // - Check if UID exists
+    MYSQL_ROW row = q.FetchRow();
+    if (!row)
+    {
+        printf("%s: unknown UID 0x%"bbI64"X\n", __FUNCTION__, uid);
+        return 0;
+    }
+
+    if (!row[0] || !row[1] || q.GetFieldLen(0)!=32 || q.GetFieldLen(1)!=32)
+        throw tsStoreException(strprintf("%s: unexpected user query result\n", __FUNCTION__));
+
+    // - salt input password
+    char saltedInput[32];
+    for (int i=0; i<32; i++)
+        saltedInput[i] = pPwd[i] ^ row[1][i];
+
+    // - sha256 the salted input, and compare with stored result
+    try
+    {
+        tsHash hash(MHASH_SHA256);
+        hash.update(saltedInput, 32);
+
+        if (memcmp(hash.digest(), row[0], 32))
+        {
+            printf("%s: UID 0x%"bbI64"X, password mismatch\n", __FUNCTION__, uid);
+            return 0;
+        }
+    }
+    catch(const tsHashException& e)
+    {
+        throw tsStoreException(e.what());
+    }
+
+    sql.Printf("SELECT id FROM feed WHERE uid=%"bbI64"u", uid);
+    row = q.ExecAndFetchRow(sql.GetPtr());
+    if (!row)
+    {
+        printf("%s: No feeds for UID 0x%"bbI64"X\n", __FUNCTION__, uid);
+        return 0;
+    }
+
+    bbU64 feedID = strtoull(row[0], NULL, 10); // _strtoui64() in MSVC
+    printf("%s: Allowing feed 0x%"bbI64"X for UID 0x%"bbI64"X\n", __FUNCTION__, feedID, uid);
+    return feedID;
 }
 

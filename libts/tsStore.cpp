@@ -18,3 +18,9 @@ tsStore* tsStore::Create(tsTickFactory& tickFactory, tsStoreBackend type, const 
     return pStore;
 }
 
+bbU64 tsStore::Authenticate(bbU64 uid, const bbU8* pPwd)
+{
+	return (bbU64)(bbS64)-1;
+}
+
+

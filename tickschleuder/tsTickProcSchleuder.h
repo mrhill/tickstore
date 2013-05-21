@@ -18,11 +18,13 @@ class tsTickProcSchleuder : public tsTickReceiver
     struct FeedFilter
     {
         bbU64 mLastFeedIDCache;
+        bbU8  mAllowAll;
         std::set<bbU64>* mHashTbl[256];
 
         FeedFilter()
         {
             mLastFeedIDCache = 0;
+            mAllowAll = 0;
             memset(mHashTbl, 0, sizeof(mHashTbl));
         }
 
@@ -45,7 +47,8 @@ class tsTickProcSchleuder : public tsTickReceiver
             std::set<bbU64>* pTbl;
             return mLastFeedIDCache == feedID ||
                    ((pTbl = mHashTbl[(bbUINT)feedID & 255]),
-                    (pTbl && pTbl->find(feedID) != pTbl->end()));
+                    (pTbl && pTbl->find(feedID) != pTbl->end())) ||
+                   mAllowAll;
         }
     };
 

@@ -4,6 +4,7 @@ project(ts)
 include_directories (
 	../../babel/include
 	${MYSQL_INCLUDE_DIR}
+	${MHASH_INCLUDE_PATH}
 )
 
 file(GLOB HEADERS "../../babel/include/*.h")

@@ -3,6 +3,7 @@ project (tickstore)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MySQL REQUIRED)
+find_package(mhash REQUIRED)
 
 add_subdirectory(../babel "${CMAKE_CURRENT_BINARY_DIR}/babel")
 add_subdirectory(libts)

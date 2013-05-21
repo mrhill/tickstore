@@ -49,6 +49,7 @@ int tsTickFactory::serializedTailSize(const tsTick& tick) const
     switch(tick.mType)
     {
     case tsTickType_Diag: return tsTickDiag::tailSize;
+    case tsTickType_Auth: return tsTickAuth::tailSize;
     default: return 0;
     }
 }
@@ -58,6 +59,7 @@ void tsTickFactory::serializeTail(const tsTick* pTick, char* pBuf) const
     switch(pTick->mType)
     {
     case tsTickType_Diag: static_cast<const tsTickDiag*>(pTick)->serializeTail(pBuf); break;
+    case tsTickType_Auth: static_cast<const tsTickAuth*>(pTick)->serializeTail(pBuf); break;
     }
 }
 
@@ -66,6 +68,7 @@ void tsTickFactory::unserializeTail(const char* pBuf, tsTick* pTick) const
     switch(pTick->mType)
     {
     case tsTickType_Diag: static_cast<tsTickDiag*>(pTick)->unserializeTail(pBuf); break;
+    case tsTickType_Auth: static_cast<tsTickAuth*>(pTick)->unserializeTail(pBuf); break;
     }
 }
 
@@ -74,6 +77,7 @@ std::string tsTickFactory::strTail(const tsTick* pTick) const
     switch(pTick->mType)
     {
     case tsTickType_Diag: return static_cast<const tsTickDiag*>(pTick)->strTail();
+    case tsTickType_Auth: return static_cast<const tsTickAuth*>(pTick)->strTail();
     default: return "";
     }
 }
@@ -119,5 +123,31 @@ void tsTickDiag::unserializeTail(const char* pBuf)
 std::string tsTickDiag::strTail() const
 {
     return ",sendtime=" + tsTime(mSendTime).str() + ",receivetime=" + tsTime(mReceiveTime).str();
+}
+
+void tsTickAuth::serializeTail(char* pBuf) const
+{
+    bbST64LE(pBuf, mUID); pBuf+=8;
+    memcpy(pBuf, mPwdHash, sizeof(mPwdHash));
+}
+
+void tsTickAuth::unserializeTail(const char* pBuf)
+{
+    mUID = bbLD64LE(pBuf); pBuf+=8;
+    memcpy(mPwdHash, pBuf, sizeof(mPwdHash));
+}
+
+std::string tsTickAuth::strTail() const
+{
+    std::string str(",uid=");
+    str += mUID + ",pwd=";
+
+    for(int i=0; i<sizeof(mPwdHash); i++)
+    {
+        static const char digits[] = "0123456789ABCDEF";
+        str += digits[mPwdHash[i]>>4];
+        str += digits[mPwdHash[i]&15];
+    }
+    return str;
 }
 

@@ -34,6 +34,7 @@ public:
     inline tsTickFactory& tickFactory() const { return mTickFactory; }
 
     virtual void SaveTick(const char* pRawTick, bbUINT tickSize) = 0;
+    virtual bbU64 Authenticate(bbU64 uid, const bbU8* pPwd);
 };
 
 #endif

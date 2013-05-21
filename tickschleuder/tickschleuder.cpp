@@ -28,6 +28,10 @@ class TestSendThread : public tsThread
         {
             tsTickSender sender(factory, "tickschleuder", "localhost");
 
+            tsTickAuth auth;
+            auth.setUID(1);
+            sender << auth;
+
             for (int i=0; i<100; i++)
             {
                 sender << priceTick;

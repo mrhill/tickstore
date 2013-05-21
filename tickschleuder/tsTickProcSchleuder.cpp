@@ -29,6 +29,22 @@ void tsTickProcSchleuder::Proc(const char* pRawTick, bbUINT tickSize)
                                (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000))
                   << std::endl;
     }
+    else if (static_cast<const tsTick&>(tickUnion).type() == tsTickType_Auth)
+    {
+        mStore.tickFactory().unserializeTail(pRawTick + headSize, &static_cast<tsTick&>(tickUnion));
+        tsTickAuth& tickAuth = static_cast<tsTickAuth&>(static_cast<tsTick&>(tickUnion));
+
+        bbU64 allowedFeedID = mStore.Authenticate(tickAuth.mUID, tickAuth.mPwdHash);
+        if (allowedFeedID == (bbU64)(bbS64)-1)
+        {
+            mInFilter.mAllowAll = 1;
+        }
+        else if (allowedFeedID)
+        {
+            mInFilter.mAllowAll = 0;
+            mInFilter.AddFeed(allowedFeedID);
+        }
+    }
     else if (mInFilter.isAllowed(static_cast<const tsTick&>(tickUnion).objID().feedID()))
     {
         mInFilter.mLastFeedIDCache = static_cast<const tsTick&>(tickUnion).objID().feedID();

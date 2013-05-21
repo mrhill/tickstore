@@ -11,7 +11,8 @@ enum tsTickType
 {
     tsTickType_None = 0,    //!< Indicating unitialized ticktype
     tsTickType_Diag,        //!< Diagnostics tick, see tsTickDiag
-    tsTickTypeFirst         //!< First ID for domain specific tick types
+    tsTickType_Auth,        //!< User authentication, see tsTickAuth
+    tsTickTypeFirst = 16    //!< First ID for domain specific tick types
 };
 
 struct tsTick
@@ -78,6 +79,27 @@ struct tsTickDiag : tsTick
     inline void setStoreTime(bbU64 timestamp) { mStoreTime = timestamp; }
 
     static const int tailSize = 24;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
+};
+
+struct tsTickAuth : tsTick
+{
+    bbU64 mUID;
+    bbU8  mPwdHash[32];
+
+    tsTickAuth() :
+        tsTick(tsTickType_Auth),
+        mUID(0)
+    {
+        memset(mPwdHash, 0, sizeof(mPwdHash));
+    }
+
+    inline bbU64 UID() const { return mUID; }
+    inline void setUID(bbU64 uid) { mUID = uid; }
+
+    static const int tailSize = 40;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
