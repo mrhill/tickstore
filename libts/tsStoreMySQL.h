@@ -61,6 +61,7 @@ public:
     virtual ~tsStoreMySQL();
     virtual void SaveTick(const char* pRawTick, bbUINT tickSize);
     virtual bbU64 Authenticate(bbU64 uid, const bbU8* pPwd);
+    virtual bbU64 CreateUser(std::string name, const bbU8* pPwd);
 };
 
 #endif

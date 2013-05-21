@@ -2,6 +2,7 @@
 #include "tsHash.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <babel/StrBuf.h>
 
 tsStoreMySQL::tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName)
@@ -234,16 +235,12 @@ bbU64 tsStoreMySQL::Authenticate(bbU64 uid, const bbU8* pPwd)
     if (!row[0] || !row[1] || q.GetFieldLen(0)!=32 || q.GetFieldLen(1)!=32)
         throw tsStoreException(strprintf("%s: unexpected user query result\n", __FUNCTION__));
 
-    // - salt input password
-    char saltedInput[32];
-    for (int i=0; i<32; i++)
-        saltedInput[i] = pPwd[i] ^ row[1][i];
-
     // - sha256 the salted input, and compare with stored result
     try
     {
         tsHash hash(MHASH_SHA256);
-        hash.update(saltedInput, 32);
+        hash.update(row[1], 32); // salt
+        hash.update(pPwd, 32); // input password
 
         if (memcmp(hash.digest(), row[0], 32))
         {
@@ -267,5 +264,49 @@ bbU64 tsStoreMySQL::Authenticate(bbU64 uid, const bbU8* pPwd)
     bbU64 feedID = strtoull(row[0], NULL, 10); // _strtoui64() in MSVC
     printf("%s: Allowing feed 0x%"bbI64"X for UID 0x%"bbI64"X\n", __FUNCTION__, feedID, uid);
     return feedID;
+}
+
+bbU64 tsStoreMySQL::CreateUser(std::string name, const bbU8* pPwd)
+{
+    tsMutexLocker lock(mMutex);
+
+    bbStrBuf sql("INSERT INTO user (name, pwd, salt) values (\"");
+
+    bbStrBuf escaped;
+    if (!escaped.SetLen(name.size()*2))
+        throw tsStoreException(strprintf("%s: out of memory\n", __FUNCTION__));
+    mysql_escape_string(escaped.GetPtr(), name.c_str(), name.size());
+
+    sql += escaped.GetPtr();
+    sql += "\",\"";
+
+    if (!escaped.SetLen(32*2))
+        throw tsStoreException(strprintf("%s: out of memory\n", __FUNCTION__));
+
+    tsHash salt(MHASH_SHA256);
+    salt.update(name.c_str(), name.size());
+    const char* stat = mysql_stat(mCon);
+    salt.update(stat, strlen(stat));
+    const char* pSalt = salt.digest();
+
+    tsHash pwdHash(MHASH_SHA256);
+    pwdHash.update(pSalt, 32);
+    pwdHash.update(pPwd, 32);
+
+    mysql_real_escape_string(mCon, escaped.GetPtr(), pwdHash.digest(), 32);
+    sql += escaped.GetPtr();
+    sql += "\",\"";
+
+
+    mysql_real_escape_string(mCon, escaped.GetPtr(), pSalt, 32);
+    sql += escaped.GetPtr();
+    sql += "\")";
+
+    if (mysql_query(mCon, sql.GetPtr()))
+        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
+
+    bbU64 uid = mysql_insert_id(mCon);
+    printf("%s: Created user %s with uid 0x%"bbI64"X\n", __FUNCTION__, name.c_str(), uid);
+    return uid;
 }
 

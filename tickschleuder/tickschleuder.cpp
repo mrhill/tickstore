@@ -9,8 +9,17 @@
 #include <iostream>
 #include <stdexcept>
 
-class TestSendThread : public tsThread
+struct TestSendThread : public tsThread
 {
+    bbU64 mTestUID;
+
+    TestSendThread(tsStore* pStore)
+    {
+        bbU8 pwdHash[32];
+        memset(pwdHash, 0, sizeof(pwdHash));
+        mTestUID = pStore->CreateUser("testsender", pwdHash);
+    }
+
     virtual void* run()
     {
         msleep(2000);
@@ -29,7 +38,8 @@ class TestSendThread : public tsThread
             tsTickSender sender(factory, "tickschleuder", "localhost");
 
             tsTickAuth auth;
-            auth.setUID(1);
+            auth.setUID(mTestUID);
+            memset(auth.mPwdHash, 0, sizeof(auth.mPwdHash));
             sender << auth;
 
             for (int i=0; i<100; i++)
@@ -51,14 +61,15 @@ class TestSendThread : public tsThread
 int main(int argc, char** argv)
 {
     tsTickFactoryFinance factory;
-    TestSendThread sender;
-    sender.start();
 
     int procID = 0;
     try
     {
         std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_MySQL, "ticks"));
         tsVecManagedPtr<tsTickProcSchleuder> tickProcessors;
+
+        TestSendThread sender(pTickerStore.get());
+        sender.start();
 
         int port = 2227;
         std::cout << __FUNCTION__ << ": listening for connections on port " << port << std::endl;
@@ -69,13 +80,14 @@ int main(int argc, char** argv)
             int newSocket = listenSocket.accept();
             tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID, 0));
         }
+
+        sender.join();
     }
     catch(std::exception& e)
     {
         std::cout << e.what();
     }
 
-    sender.join();
     return 0;
 }
 

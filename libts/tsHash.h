@@ -18,7 +18,7 @@ class tsHash
 public:
     tsHash(hashid id)
     {
-        if ((mTd = mhash_init(MHASH_SHA256)) == MHASH_FAILED)
+        if ((mTd = mhash_init(id)) == MHASH_FAILED)
             throw tsHashException(strprintf("%s: mhash_init(%d) failed\n", __FUNCTION__, id));
     }
 
