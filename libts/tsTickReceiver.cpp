@@ -5,7 +5,6 @@ tsTickReceiver::tsTickReceiver(tsTickFactory& tickFactory, int socketFD, int pro
   : mSocket(tsSocketType_TCP), mProcID(procID), mTickQueue(tickFactory)
 {
     mSocket.setSocketDescriptor(socketFD);
-    start();
 }
 
 tsTickReceiver::~tsTickReceiver()

@@ -4,6 +4,7 @@
 #include "tsTickSender.h"
 #include "tsTickFinance.h"
 #include "tsTickProcSchleuder.h"
+#include "tsSession.h"
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -67,6 +68,7 @@ int main(int argc, char** argv)
     {
         std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_MySQL, "ticks"));
         tsVecManagedPtr<tsTickProcSchleuder> tickProcessors;
+        tsVecManagedPtr<tsSession> sessions;
 
         TestSendThread sender(pTickerStore.get());
         sender.start();
@@ -88,16 +90,16 @@ int main(int argc, char** argv)
             {
                 if (socketSet.testRdFD(listenSocketIn.fd()))
                 {
-                    std::cout << __FUNCTION__ << ": new connection on port 2227" << std::endl;
-                    int newSocket = listenSocketIn.accept();
-                    tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID, 0));
+                    printf("%s: new incoming feed on port %d\n", __FUNCTION__, portIn);
+                    int newSocketIn = listenSocketIn.accept();
+                    tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocketIn, ++procID, 0));
                 }
 
                 if (socketSet.testRdFD(listenSocketOut.fd()))
                 {
-                    std::cout << __FUNCTION__ << ": new connection on port 2228" << std::endl;
-                    int newSocket = listenSocketIn.accept();
-                    tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID, 0));
+                    printf("%s: new outgoing feed on port %d\n", __FUNCTION__, portOut);
+                    int newSocketOut = listenSocketOut.accept();
+                    sessions.push_back(new tsSession(factory, *pTickerStore, newSocketOut, ++procID));
                 }
             }
         }

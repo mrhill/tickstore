@@ -7,7 +7,7 @@
 #include "tsThread.h"
 #include "tsTickQueue.h"
 
-class tsTickReceiver : tsThread
+class tsTickReceiver : protected tsThread
 {
     tsSocket    mSocket;
     int         mProcID;

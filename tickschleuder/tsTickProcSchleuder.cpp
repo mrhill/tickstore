@@ -10,6 +10,8 @@ tsTickProcSchleuder::tsTickProcSchleuder(tsTickFactory& tickFactory, tsStore& st
     mInFilter.AddFeed(400);
     mInFilter.AddFeed(29);
     mInFilter.AddFeed(0x42);
+
+    tsTickReceiver::start();
 }
 
 void tsTickProcSchleuder::Proc(const char* pRawTick, bbUINT tickSize)

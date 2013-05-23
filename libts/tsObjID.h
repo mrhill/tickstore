@@ -1,10 +1,8 @@
 #ifndef tsOBJID_H
 #define tsOBJID_H
 
-#include <babel/defs.h>
-#include <string>
-#include <ostream>
 #include "tsdef.h"
+#include <ostream>
 
 class tsObjID
 {

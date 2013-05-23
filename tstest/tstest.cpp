@@ -24,6 +24,11 @@ int main(int argc, char** argv)
                             argc>1 ? argv[1] : "localhost",
                             argc>2 ? atoi(argv[2]) : 2227);
 
+        tsTickAuth auth;
+        auth.setUID(1);
+        memset(auth.mPwdHash, 0, sizeof(auth.mPwdHash));
+        sender << auth;
+
         for (int i=0; i<1000; i++)
         {
             priceTick.setPrice(i);
