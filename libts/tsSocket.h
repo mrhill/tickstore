@@ -58,6 +58,7 @@ public:
     ~tsSocket();
     void setSocketDescriptor(int socket);
     tsSocketState state() const { return mState; }
+    inline int fd() { return mSocket; }
     void close();
     void connect(const char* pHostName, bbU16 port, tsSocketMode openMode = tsSocketMode_ReadWrite);
     void listen(bbU16 port);
@@ -78,6 +79,22 @@ public:
         int port = peerAddress(s);
         return strprintf("%s:%d", s.c_str(), port);
     }
+};
+
+class tsSocketSet
+{
+    fd_set mRdFds;
+    fd_set mWrFds;
+    int    mHighestFD;
+    bbU8   mRdIsSet;
+    bbU8   mWrIsSet;
+public:
+    tsSocketSet();
+    void addRdFD(int fd);
+    void addWrFD(int fd);
+    bool testRdFD(int fd) { return FD_ISSET(fd, &mRdFds); }
+    bool testWrFD(int fd) { return FD_ISSET(fd, &mWrFds); }
+    int select(int timeoutUs = 0);
 };
 
 #endif

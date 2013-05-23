@@ -19,7 +19,10 @@ int main(int argc, char** argv)
 
     try
     {
-        tsTickSender sender(factory, "tstest", "localhost");
+        tsTickSender sender(factory,
+                            "tstest",
+                            argc>1 ? argv[1] : "localhost",
+                            argc>2 ? atoi(argv[2]) : 2227);
 
         for (int i=0; i<1000; i++)
         {

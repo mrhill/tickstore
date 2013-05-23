@@ -20,7 +20,7 @@ static bool winsockInit()
         return true;
     WSADATA wsaData;
     WORD wVersionRequested = MAKEWORD( 2, 2 );
- 
+
     int err = WSAStartup( wVersionRequested, &wsaData );
     if ( err != 0 ) {
         return false;
@@ -227,7 +227,7 @@ void tsSocket::send(const char* pBuf, bbU32 len)
 {
     while ((bbS32)len > 0)
     {
-        int status = ::send(mSocket, (const char*)pBuf, len, 0); 
+        int status = ::send(mSocket, (const char*)pBuf, len, 0);
         if (status == -1)
             throw tsSocketException(strprintf("%s: error %d", __FUNCTION__, errno));
         len -= status;
@@ -303,3 +303,48 @@ int tsSocket::peerAddress(std::string& hostName) const
     hostName = ipstr;
     return port;
 }
+
+
+tsSocketSet::tsSocketSet() : mHighestFD(0), mRdIsSet(0), mWrIsSet(0)
+{
+    FD_ZERO(&mRdFds);
+    FD_ZERO(&mWrFds);
+}
+
+void tsSocketSet::addRdFD(int fd)
+{
+    FD_SET(fd, &mRdFds);
+    if (fd >= mHighestFD)
+        mHighestFD = fd + 1;
+    mRdIsSet = 1;
+}
+
+void tsSocketSet::addWrFD(int fd)
+{
+    FD_SET(fd, &mWrFds);
+    if (fd >= mHighestFD)
+        mHighestFD = fd + 1;
+    mWrIsSet = 1;
+}
+
+int tsSocketSet::select(int timeoutUs)
+{
+    struct timeval timeout;
+
+    if (timeoutUs)
+    {
+        timeout.tv_sec = timeoutUs / 1000000;
+        timeout.tv_usec = timeoutUs - (timeout.tv_sec * 1000000);
+    }
+
+    int retval = ::select(mHighestFD,
+                          mRdIsSet ? &mRdFds : NULL,
+                          mWrIsSet ? &mWrFds : NULL,
+                          NULL,
+                          timeoutUs ? &timeout : NULL);
+    if (retval == -1)
+        throw tsSocketException(strprintf("%s: error %d on select", __FUNCTION__, errno));
+
+    return retval;
+}
+

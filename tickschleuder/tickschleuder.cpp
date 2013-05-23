@@ -71,14 +71,35 @@ int main(int argc, char** argv)
         TestSendThread sender(pTickerStore.get());
         sender.start();
 
-        int port = 2227;
-        std::cout << __FUNCTION__ << ": listening for connections on port " << port << std::endl;
-        tsSocket listenSocket(tsSocketType_TCP);
-        listenSocket.listen(port);
+        int portIn = 2227, portOut = 2228;
+        std::cout << __FUNCTION__ << ": listening for connections on ports " << portIn << ' ' << portOut << std::endl;
+        tsSocket listenSocketIn(tsSocketType_TCP);
+        tsSocket listenSocketOut(tsSocketType_TCP);
+        listenSocketIn.listen(portIn);
+        listenSocketOut.listen(portOut);
+
         while (true)
         {
-            int newSocket = listenSocket.accept();
-            tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID, 0));
+            tsSocketSet socketSet;
+            socketSet.addRdFD(listenSocketIn.fd());
+            socketSet.addRdFD(listenSocketOut.fd());
+
+            if (socketSet.select())
+            {
+                if (socketSet.testRdFD(listenSocketIn.fd()))
+                {
+                    std::cout << __FUNCTION__ << ": new connection on port 2227" << std::endl;
+                    int newSocket = listenSocketIn.accept();
+                    tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID, 0));
+                }
+
+                if (socketSet.testRdFD(listenSocketOut.fd()))
+                {
+                    std::cout << __FUNCTION__ << ": new connection on port 2228" << std::endl;
+                    int newSocket = listenSocketIn.accept();
+                    tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocket, ++procID, 0));
+                }
+            }
         }
 
         sender.join();
