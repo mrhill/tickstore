@@ -9,6 +9,8 @@ class tsSession : protected tsTickReceiver
 {
     tsStore& mStore;
 
+    void SubscribeFeed(bbU64 feedID);
+
     virtual void Proc(const char* pRawTick, bbUINT tickSize);
 
 public:

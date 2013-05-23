@@ -151,3 +151,18 @@ std::string tsTickAuth::strTail() const
     return str;
 }
 
+void tsTickSubscribe::serializeTail(char* pBuf) const
+{
+    bbST64LE(pBuf, mFeedID);
+}
+
+void tsTickSubscribe::unserializeTail(const char* pBuf)
+{
+    mFeedID = bbLD64LE(pBuf);
+}
+
+std::string tsTickSubscribe::strTail() const
+{
+    return ",feed=" + mFeedID;
+}
+

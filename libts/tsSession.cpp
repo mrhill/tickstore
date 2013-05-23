@@ -21,7 +21,12 @@ void tsSession::Proc(const char* pRawTick, bbUINT tickSize)
     case tsTickType_Auth:
         printf("%s: tsTickType_Auth\n", __FUNCTION__);
         break;
+    case tsTickType_Subscribe:
+        break;
     }
 }
 
+void tsSession::SubscribeFeed(bbU64 feedID)
+{
+}
 

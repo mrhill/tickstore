@@ -12,6 +12,7 @@ enum tsTickType
     tsTickType_None = 0,    //!< Indicating unitialized ticktype
     tsTickType_Diag,        //!< Diagnostics tick, see tsTickDiag
     tsTickType_Auth,        //!< User authentication, see tsTickAuth
+    tsTickType_Subscribe,   //!< Feed subscription, see tsTickSubscribe
     tsTickTypeFirst = 16    //!< First ID for domain specific tick types
 };
 
@@ -100,6 +101,22 @@ struct tsTickAuth : tsTick
     inline void setUID(bbU64 uid) { mUID = uid; }
 
     static const int tailSize = 40;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
+};
+
+struct tsTickSubscribe : tsTick
+{
+    bbU64 mFeedID;
+
+    tsTickSubscribe() :
+        tsTick(tsTickType_Subscribe),
+        mFeedID(0)
+    {
+    }
+
+    static const int tailSize = 8;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
