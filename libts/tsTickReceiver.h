@@ -9,6 +9,7 @@
 
 class tsTickReceiver : protected tsThread
 {
+protected:
     tsSocket    mSocket;
     int         mProcID;
     bbU64       mBytesReceived;

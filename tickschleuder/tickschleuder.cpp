@@ -3,8 +3,8 @@
 #include "tsThread.h"
 #include "tsTickSender.h"
 #include "tsTickFinance.h"
-#include "tsTickProcSchleuder.h"
-#include "tsSession.h"
+#include "tsTracker.h"
+#include "tsNode.h"
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -62,49 +62,18 @@ struct TestSendThread : public tsThread
 int main(int argc, char** argv)
 {
     tsTickFactoryFinance factory;
+    tsTracker tracker;
 
-    int procID = 0;
     try
     {
         std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_MySQL, "ticks"));
-        tsVecManagedPtr<tsTickProcSchleuder> tickProcessors;
-        tsVecManagedPtr<tsSession> sessions;
+        tsNode node(factory, tracker, *pTickerStore);
 
-        TestSendThread sender(pTickerStore.get());
-        sender.start();
+        //TestSendThread sender(pTickerStore.get());
+        //sender.start();
 
-        int portIn = 2227, portOut = 2228;
-        std::cout << __FUNCTION__ << ": listening for connections on ports " << portIn << ' ' << portOut << std::endl;
-        tsSocket listenSocketIn(tsSocketType_TCP);
-        tsSocket listenSocketOut(tsSocketType_TCP);
-        listenSocketIn.listen(portIn);
-        listenSocketOut.listen(portOut);
-
-        while (true)
-        {
-            tsSocketSet socketSet;
-            socketSet.addRdFD(listenSocketIn.fd());
-            socketSet.addRdFD(listenSocketOut.fd());
-
-            if (socketSet.select())
-            {
-                if (socketSet.testRdFD(listenSocketIn.fd()))
-                {
-                    printf("%s: new incoming feed on port %d\n", __FUNCTION__, portIn);
-                    int newSocketIn = listenSocketIn.accept();
-                    tickProcessors.push_back(new tsTickProcSchleuder(factory, *pTickerStore, newSocketIn, ++procID, 0));
-                }
-
-                if (socketSet.testRdFD(listenSocketOut.fd()))
-                {
-                    printf("%s: new outgoing feed on port %d\n", __FUNCTION__, portOut);
-                    int newSocketOut = listenSocketOut.accept();
-                    sessions.push_back(new tsSession(factory, *pTickerStore, newSocketOut, ++procID));
-                }
-            }
-        }
-
-        sender.join();
+        node.join();
+        //sender.join();
     }
     catch(std::exception& e)
     {
