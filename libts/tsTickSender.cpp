@@ -79,7 +79,7 @@ void* tsTickSender::run()
 
 tsTickSender::tsTickSender(tsTickFactory& tickFactory, const char* pQueueName, const char* pHostName, int port)
   : mTickCount(0), mLogLevel(2), mSocket(tsSocketType_TCP),
-    mTickQueue(tickFactory, pQueueName), mHostName(pHostName), mPort(port)
+    mTickQueue(tickFactory, pQueueName, true), mHostName(pHostName), mPort(port)
 {
     tsThread::start();
 }

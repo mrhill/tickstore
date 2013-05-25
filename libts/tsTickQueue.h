@@ -18,6 +18,7 @@ class tsTickQueue
     bbUINT  mSize;                  //!< Size of queue buffer, must be power of 2
     FILE*   mLogFD;
     char    mWrapBuf[tsTick::SERIALIZEDMAXSIZE]; //!< Temp buffer to handle wraps
+    std::string mName;
 
 public:
     struct BufDesc
@@ -28,8 +29,10 @@ public:
         bbUINT sizeSecond;
     };
 
-    tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName = NULL, bbUINT bufsize = 8192);
+    tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName = NULL, bool logToFile = false, bbUINT bufsize = 8192);
     ~tsTickQueue();
+
+    const char* name() const { return mName.c_str(); }
 
     /** Test if queue is empty.
         @return true if empty, false if data available
@@ -89,13 +92,13 @@ public:
         mRd = (mRd + tickSize) & (mSize-1);
     }
 
-    /** Flush all data in queue. */
+    /** Flush all data in queue.
+        Only thread-safe to call from read size.
+    */
     inline void flush()
     {
         mRd = mWr;
     }
-
-    friend class tsTickReceiver;
 };
 
 #endif

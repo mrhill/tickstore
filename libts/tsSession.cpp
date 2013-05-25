@@ -2,14 +2,20 @@
 #include "tsNode.h"
 #include <iostream>
 
-tsSession::tsSession(tsTickFactory& tickFactory, tsNode& node, tsStore& store, int fd, int procID)
-  : tsTickReceiver(tickFactory, fd, procID), mNode(node), mStore(store)
+tsSession::tsSession(tsTickFactory& tickFactory, tsNode& node, tsStore& store, int socketFD, int procID)
+  : tsTickReceiver(tickFactory),
+    mSocket(tsSocketType_TCP),
+    mNode(node),
+    mStore(store),
+    mSessionID(procID)
 {
+    mSocket.setSocketDescriptor(socketFD);
+
     mInFilter.AddFeed(400);
     mInFilter.AddFeed(29);
     mInFilter.AddFeed(0x42);
 
-    tsTickReceiver::start();
+    start();
 }
 
 tsSession::~tsSession()
@@ -20,9 +26,34 @@ tsSession::~tsSession()
 
 void* tsSession::run()
 {
-    void* ret = tsTickReceiver::run();
+    bool connected = true;
+
+    printf("%s %d: connection from %s\n", __FUNCTION__, mSessionID, mSocket.peerName().c_str());
+
+    try
+    {
+        while (!testCancel() && (connected || !mTickQueue.empty()))
+        {
+            int bytesReceived = tsTickReceiver::receive(mSocket, 1000);
+            if (bytesReceived <= 0)
+            {
+                if (bytesReceived == 0)
+                    connected = false;
+                else
+                    continue; // timeout
+            }
+        }
+    }
+    catch(tsSocketException& e)
+    {
+        printf("%s %d: exception '%s'\n", __FUNCTION__, mSessionID, e.what());
+    }
+
+    printf("%s %d: shutting down connection from %s (%d bytes left in q)\n", __FUNCTION__,
+        mSessionID, mSocket.peerName().c_str(), mTickQueue.size());
+
     mNode.DeactivateSession(this);
-    return ret;
+    return NULL;
 }
 
 void tsSession::Proc(const char* pRawTick, bbUINT tickSize)
@@ -52,6 +83,8 @@ void tsSession::Proc(const char* pRawTick, bbUINT tickSize)
         mStore.tickFactory().unserializeTail(pRawTick + headSize, &tick);
         tsTickAuth& tickAuth = static_cast<tsTickAuth&>(tick);
 
+        std::cout << mStore.tickFactory().str(tickAuth) << std::endl;
+
         bbU64 allowedFeedID = mStore.Authenticate(tickAuth.mUID, tickAuth.mPwdHash);
         if (allowedFeedID == (bbU64)(bbS64)-1)
         {
@@ -66,8 +99,14 @@ void tsSession::Proc(const char* pRawTick, bbUINT tickSize)
         break;
 
     case tsTickType_Subscribe:
+        {
         mStore.tickFactory().unserializeTail(pRawTick + headSize, &tick);
-        SubscribeFeed(static_cast<tsTickSubscribe&>(tick).feedID());
+        tsTickSubscribe& tickSubscribe = static_cast<tsTickSubscribe&>(tick);
+
+        std::cout << mStore.tickFactory().str(tickSubscribe) << std::endl;
+
+        SubscribeFeed(tickSubscribe.feedID());
+        }
         break;
 
     default:

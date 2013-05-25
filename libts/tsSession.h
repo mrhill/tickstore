@@ -3,17 +3,19 @@
 
 #include "tsdef.h"
 #include "tsStore.h"
+#include "tsThread.h"
 #include "tsTickReceiver.h"
 #include <set>
 
 class tsNode;
 
-class tsSession : protected tsTickReceiver
+class tsSession : protected tsThread, protected tsTickReceiver
 {
     friend class tsNode;
 
-    tsNode& mNode;
-    tsStore& mStore;
+    tsSocket        mSocket;
+    tsNode&         mNode;
+    tsStore&        mStore;
 
     struct FeedFilter
     {
@@ -53,6 +55,7 @@ class tsSession : protected tsTickReceiver
     };
 
     FeedFilter mInFilter;
+    int mSessionID;
 
     void SubscribeFeed(bbU64 feedID);
 

@@ -1,25 +1,24 @@
 #ifndef tsTICKRECEIVER_H
 #define tsTICKRECEIVER_H
 
-#include "tsTick.h"
-#include "tsHeader.h"
 #include "tsSocket.h"
-#include "tsThread.h"
 #include "tsTickQueue.h"
 
-class tsTickReceiver : protected tsThread
+class tsTickReceiver
 {
 protected:
-    tsSocket    mSocket;
-    int         mProcID;
     bbU64       mBytesReceived;
     bbU64       mTicksReceived;
     tsTickQueue mTickQueue;
 
-    virtual void* run();
 public:
-    tsTickReceiver(tsTickFactory& tickFactory, int socketFD, int procID);
-    ~tsTickReceiver();
+    tsTickReceiver(tsTickFactory& tickFactory, const char* pQueueName = NULL);
+
+    /** Receive data from socket
+        @param socket Socket
+        @param timeout Timeout, see tsSocket::recv()
+    */
+    int receive(tsSocket& socket, int timeout);
 
     /** Process a received tick.
         @param pRawTick Serialized tick

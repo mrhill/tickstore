@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdexcept>
 
-tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName, bbUINT bufsize)
+tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName, bool logToFile, bbUINT bufsize)
   : mTickFactory(tickFactory), mpBuf(NULL), mSize(bufsize), mRd(0), mWr(0), mLogFD(NULL)
 {
     if (!bbIsPwr2(bufsize))
@@ -11,14 +11,17 @@ tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName, bbU
 
     mpBuf = new char[bufsize];
 
-    if (pQueueName)
-        mLogFD = fopen((std::string(pQueueName)+".q.dat").c_str(), "ab");
+    if (pQueueName && logToFile)
+    {
+        mName = pQueueName;
+        mLogFD = ::fopen((mName + ".q.dat").c_str(), "ab");
+    }
 }
 
 tsTickQueue::~tsTickQueue()
 {
     if (mLogFD)
-        fclose(mLogFD);
+        ::fclose(mLogFD);
 
     delete[] mpBuf;
 }
