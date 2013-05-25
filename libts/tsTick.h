@@ -116,6 +116,9 @@ struct tsTickSubscribe : tsTick
     {
     }
 
+    inline bbU64 feedID() const { return mFeedID; }
+    inline void setFeedID(bbU64 uid) { mFeedID = uid; }
+
     static const int tailSize = 8;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);

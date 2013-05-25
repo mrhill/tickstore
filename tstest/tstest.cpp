@@ -29,6 +29,10 @@ int main(int argc, char** argv)
         memset(auth.mPwdHash, 0, sizeof(auth.mPwdHash));
         sender << auth;
 
+        tsTickSubscribe subscr;
+        subscr.setFeedID(0);
+        sender << subscr;
+
         for (int i=0; i<1000; i++)
         {
             priceTick.setPrice(i);
