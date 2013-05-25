@@ -47,20 +47,31 @@ struct addrinfo;
 
 class tsSocket
 {
-    tsSocketType     mType;
-    tsSocketState    mState;
+    int              mSocket;   //!< Socket FD
+    bbU8             mType;     //!< tsSocketType
+    bbU8             mState;    //!< tsSocketState
     struct addrinfo* mpAddrInfo;
-    int              mSocket;
+    struct addrinfo* mpAddrBound;
 
+    void freeAddressInfo();
     void getAddressInfo(const char* pHostName, bbU16 port);
 public:
     tsSocket(tsSocketType type);
     ~tsSocket();
     void setSocketDescriptor(int socket);
-    tsSocketState state() const { return mState; }
-    inline int fd() { return mSocket; }
+    tsSocketState state() const { return (tsSocketState)mState; }
+    inline int fd() const { return mSocket; }
     void close();
     void connect(const char* pHostName, bbU16 port, tsSocketMode openMode = tsSocketMode_ReadWrite);
+
+    /** Bind socket to local host.
+        @param pHostName hostname or NULL local loopback
+        @param Port number
+    */
+    void bind(const char* pHostName, bbU16 port);
+
+    std::string nameinfo() const;
+
     void listen(bbU16 port);
     int accept(tsSocket* pSocket = NULL);
     void send(const char* pBuf, bbU32 len);

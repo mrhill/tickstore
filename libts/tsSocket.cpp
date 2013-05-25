@@ -80,10 +80,11 @@ static int _inet_pton(int af, const char *src, void *dst)
 #endif
 
 tsSocket::tsSocket(tsSocketType type) :
-    mType(type),
-    mState(tsSocketState_Unconnected),
+    mSocket(-1),
+    mType((bbU8)type),
+    mState((bbU8)tsSocketState_Unconnected),
     mpAddrInfo(NULL),
-    mSocket(-1)
+    mpAddrBound(NULL)
 {
     #if bbOS == bbOS_WIN32
     winsockInit();
@@ -93,7 +94,6 @@ tsSocket::tsSocket(tsSocketType type) :
 tsSocket::~tsSocket()
 {
     close();
-    freeaddrinfo(mpAddrInfo); // free the linked-list
 }
 
 void tsSocket::close()
@@ -107,7 +107,18 @@ void tsSocket::close()
         #endif
         mSocket = -1;
     }
-    mState = tsSocketState_Unconnected;
+    mpAddrBound = NULL;
+    freeAddressInfo();
+    mState = (bbU8)tsSocketState_Unconnected;
+}
+
+void tsSocket::freeAddressInfo()
+{
+    if (mpAddrInfo)
+    {
+        ::freeaddrinfo(mpAddrInfo); // free the linked-list
+        mpAddrInfo = NULL;
+    }
 }
 
 void tsSocket::getAddressInfo(const char* pHostName, bbU16 port)
@@ -117,15 +128,11 @@ void tsSocket::getAddressInfo(const char* pHostName, bbU16 port)
 
     memset(&hints, 0, sizeof hints); // make sure the struct is empty
     hints.ai_family = AF_UNSPEC;     // don't care IPv4 or IPv6
-    hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
-    hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
+    hints.ai_socktype = (mType == tsSocketType_TCP) ? SOCK_STREAM : SOCK_DGRAM;
+    hints.ai_flags = AI_PASSIVE ;// fill in my IP for me
     snprintf(strPort, 8, "%d", port);
 
-    if (mpAddrInfo)
-    {
-        freeaddrinfo(mpAddrInfo); // free the linked-list
-        mpAddrInfo = NULL;
-    }
+    freeAddressInfo();
 
     int status = getaddrinfo(pHostName, strPort, &hints, &mpAddrInfo);
     if (status != 0)
@@ -162,10 +169,10 @@ void tsSocket::connect(const char* pHostName, bbU16 port, tsSocketMode openMode)
 {
     close();
 
-    mState = tsSocketState_HostLookup;
+    mState = (bbU8)tsSocketState_HostLookup;
     getAddressInfo(pHostName, port);
 
-    mState = tsSocketState_Connecting;
+    mState = (bbU8)tsSocketState_Connecting;
     mSocket = socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
     if (mSocket == -1) {
         close();
@@ -177,35 +184,98 @@ void tsSocket::connect(const char* pHostName, bbU16 port, tsSocketMode openMode)
         close();
         throw tsSocketException(strprintf("%s: Error %d connecting socket", __FUNCTION__, errno));
     }
-    mState = tsSocketState_Connected;
+    mState = (bbU8)tsSocketState_Connected;
+}
+
+void tsSocket::bind(const char* pHostName, bbU16 port)
+{
+    close();
+
+    mState = (bbU8)tsSocketState_HostLookup;
+    getAddressInfo(pHostName, port);
+
+    mState = (bbU8)tsSocketState_Connecting;
+    struct addrinfo* p;
+
+    for(p = mpAddrInfo; p != NULL; p = p->ai_next)
+    {
+        mSocket = ::socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
+        if (mSocket == -1)
+            continue;
+
+        if (::bind(mSocket, p->ai_addr, p->ai_addrlen) == -1)
+        {
+            ::close(mSocket);
+            mSocket = -1;
+            continue;
+        }
+
+        break;
+    }
+
+    if (p == NULL)
+    {
+        close();
+        throw tsSocketException(strprintf("%s: Error %d creating and binding socket", __FUNCTION__, errno));
+    }
+
+    mpAddrBound = p;
+    mState = (bbU8)tsSocketState_BoundState;
+}
+
+std::string tsSocket::nameinfo() const
+{
+    std::string str;
+
+    if (mpAddrBound)
+    {
+        char host[64];
+        char service[20];
+
+        int flags = NI_NUMERICHOST|NI_NUMERICSERV;
+        if (mType == tsSocketType_UDP)
+            flags |= NI_DGRAM;
+
+        if (!getnameinfo(mpAddrBound->ai_addr, mpAddrBound->ai_addrlen,
+                         host, sizeof(host),
+                         service, sizeof(service),
+                         flags))
+        {
+            str = host;
+            str += ' ';
+            str += service;
+        }
+    }
+
+    return str;
 }
 
 void tsSocket::listen(bbU16 port)
 {
     close();
-    mState = tsSocketState_HostLookup;
+    mState = (bbU8)tsSocketState_HostLookup;
     getAddressInfo(NULL, port);
 
-    mState = tsSocketState_Connecting;
-    mSocket = socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
+    mState = (bbU8)tsSocketState_Connecting;
+    mSocket = ::socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
     if (mSocket == -1) {
         close();
         throw tsSocketException(strprintf("%s: Error %d creating socket", __FUNCTION__, errno));
     }
 
-    int state = bind(mSocket, mpAddrInfo->ai_addr, mpAddrInfo->ai_addrlen);
+    int state = ::bind(mSocket, mpAddrInfo->ai_addr, mpAddrInfo->ai_addrlen);
     if (state == -1) {
         close();
         throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
     }
-    mState = tsSocketState_BoundState;
+    mState = (bbU8)tsSocketState_BoundState;
 
     state = ::listen(mSocket, 10);
     if (state == -1) {
         close();
         throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
     }
-    mState = tsSocketState_ListeningState;
+    mState = (bbU8)tsSocketState_ListeningState;
 }
 
 int tsSocket::accept(tsSocket* pSocket)
@@ -240,7 +310,7 @@ int tsSocket::recv(char* pBuf, bbU32 bufsize, int timeoutMs)
 
     bbASSERT((bbS32)bufsize > 0);
 
-    if (timeoutMs != -1) // -1 for blocking
+    if (timeoutMs > 0) // -1 for blocking, 0 for immediate return
     {
         fd_set readfd;
         struct timeval tv;
@@ -266,8 +336,8 @@ int tsSocket::recv(char* pBuf, bbU32 bufsize, int timeoutMs)
             return 0;
     }
 
-    status = ::recv(mSocket, pBuf, bufsize, 0);
-    if (status == -1)
+    status = ::recv(mSocket, pBuf, bufsize, MSG_DONTWAIT);
+    if ((status == -1) && (errno != EWOULDBLOCK))
         throw tsSocketException(strprintf("%s: error %d on recv", __FUNCTION__, errno));
     return status;
 }
@@ -276,7 +346,7 @@ void tsSocket::setSocketDescriptor(int socket)
 {
     close();
     mSocket = socket;
-    mState = tsSocketState_Connected;
+    mState = (bbU8)tsSocketState_Connected;
 }
 
 int tsSocket::peerAddress(std::string& hostName) const
@@ -303,7 +373,6 @@ int tsSocket::peerAddress(std::string& hostName) const
     hostName = ipstr;
     return port;
 }
-
 
 tsSocketSet::tsSocketSet() : mHighestFD(0), mRdIsSet(0), mWrIsSet(0)
 {
