@@ -62,6 +62,9 @@ class tsSession : protected tsThread, protected tsTickReceiver
     virtual void* run();
     virtual void Proc(const char* pRawTick, bbUINT tickSize);
 
+protected:
+    void SendOut(const char* pRawTick, bbUINT tickSize);
+
 public:
     tsSession(tsTickFactory& tickFactory, tsNode& node, tsStore& store, int fd, int procID);
     ~tsSession();

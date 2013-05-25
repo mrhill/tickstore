@@ -61,7 +61,7 @@ void tsTickFactory::serializeTail(const tsTick* pTick, char* pBuf) const
     {
     case tsTickType_Diag: static_cast<const tsTickDiag*>(pTick)->serializeTail(pBuf); break;
     case tsTickType_Auth: static_cast<const tsTickAuth*>(pTick)->serializeTail(pBuf); break;
-    case tsTickType_Subscribe:  static_cast<const tsTickSubscribe*>(pTick)->serializeTail(pBuf); break;
+    case tsTickType_Subscribe: static_cast<const tsTickSubscribe*>(pTick)->serializeTail(pBuf); break;
     }
 }
 

@@ -74,12 +74,18 @@ public:
 
     void listen(bbU16 port);
     int accept(tsSocket* pSocket = NULL);
-    void send(const char* pBuf, bbU32 len);
+
+    /** Send bytes to socket.
+        @param pBuf Pointer to buffer
+        @param len Number of bytes to send
+        @param timeoutMs Timeout in miliseconds, 0 for immediate return, -1 for blocking
+    */
+    int send(const char* pBuf, bbU32 len, int timeoutMs = -1);
 
     /** Receive bytes from socket.
         @param pBuf Pointer to buffer
         @param bufsize Size of buffer
-        @param timeoutUs Timeout in miliseconds, 0 for immediate return, -1 for blocking
+        @param timeoutMs Timeout in miliseconds, 0 for immediate return, -1 for blocking
         @return Number of bytes read, 0 if connection was closed, -1 if timeout reached
     */
     int recv(char* pBuf, bbU32 bufsize, int timeoutMs);

@@ -293,15 +293,22 @@ int tsSocket::accept(tsSocket* pSocket)
     return newSocket;
 }
 
-void tsSocket::send(const char* pBuf, bbU32 len)
+int tsSocket::send(const char* pBuf, bbU32 len, int timeoutMs)
 {
+    int size = len;
     while ((bbS32)len > 0)
     {
-        int status = ::send(mSocket, (const char*)pBuf, len, 0);
+        int status = ::send(mSocket, (const char*)pBuf, len, timeoutMs ? 0 : MSG_DONTWAIT);
         if (status == -1)
-            throw tsSocketException(strprintf("%s: error %d", __FUNCTION__, errno));
+        {
+            if (errno == EWOULDBLOCK)
+                return 0;
+            else
+                throw tsSocketException(strprintf("%s: error %d", __FUNCTION__, errno));
+        }
         len -= status;
     }
+    return size;
 }
 
 int tsSocket::recv(char* pBuf, bbU32 bufsize, int timeoutMs)

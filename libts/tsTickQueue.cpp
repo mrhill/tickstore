@@ -11,10 +11,11 @@ tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName, boo
 
     mpBuf = new char[bufsize];
 
-    if (pQueueName && logToFile)
+    if (pQueueName)
     {
         mName = pQueueName;
-        mLogFD = ::fopen((mName + ".q.dat").c_str(), "ab");
+        if (logToFile)
+            mLogFD = ::fopen((mName + ".q.dat").c_str(), "ab");
     }
 }
 
@@ -45,13 +46,13 @@ bool tsTickQueue::push(const tsTick& tick)
     }
     else
     {
-        bbUINT firsPart = mSize-wr;
+        bbUINT firstPart = mSize-wr;
 
         char wrapBuf[tsTick::SERIALIZEDMAXSIZE];
         mTickFactory.serialize(tick, wrapBuf);
 
-        memcpy(mpBuf + wr, wrapBuf, firsPart);
-        memcpy(mpBuf, wrapBuf + firsPart, tickSize-firsPart);
+        memcpy(mpBuf + wr, wrapBuf, firstPart);
+        memcpy(mpBuf, wrapBuf + firstPart, tickSize-firstPart);
 
         if (mLogFD)
             fwrite(wrapBuf, tickSize, 1, mLogFD);

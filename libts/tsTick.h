@@ -47,6 +47,11 @@ struct tsTick
     int serializeHead(char* pBuf, int tailSize) const;
     int unserializeHead(const char* pBuf);
 
+    static inline bbU64 unserializeHead_peekFeedID(const char* pBuf)
+    {
+        return bbLD64LE(pBuf + SERIALIZEDPREFIX);
+    }
+
     friend class tsTickQueue;
 };
 

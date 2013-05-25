@@ -48,6 +48,16 @@ void tsNode::DeactivateSession(tsSession* pSession)
 {
     tsMutexLocker lock(mNodeMutex);
 
+    // unsubscribe all feeds for this session
+    for (SubscriberMap::iterator it=mSubscriberMap.begin(); it!=mSubscriberMap.end(); )
+    {
+        SubscriberMap::iterator it_inc = it; it_inc++;
+        if (it->second == pSession)
+            mSubscriberMap.erase(it);
+        it = it_inc;
+    }
+
+    // move session to inactive session list
     std::vector<tsSession*>::iterator it = std::find(mSessions.begin(), mSessions.end(), pSession);
     if (it != mSessions.end())
     {
@@ -106,21 +116,32 @@ void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
 {
     tsMutexLocker lock(mNodeMutex);
 
-    if (mSubscriberMap.find(feedID) == mSubscriberMap.end()) // node already subscribed?
+    if (mSubscriberMap.find(feedID) != mSubscriberMap.end()) // node already subscribing to feedID?
     {
+        // return if this session is already registered for this feedID
+        std::pair<SubscriberMap::const_iterator,SubscriberMap::const_iterator> range = mSubscriberMap.equal_range(feedID);
+        for (SubscriberMap::const_iterator it=range.first; it!=range.second; ++it)
+            if (it->second == pSession)
+                return;
+    }
+    else
+    {
+        // subscribe node to feedID
         std::string node = mInPipe.nameinfo();
         std::cout << __FUNCTION__ << ": subscribing node for feedID " << feedID << std::endl;
         if (node.size())
             mTracker.Subscribe(node, feedID);
     }
+
+    // map feedID to session
+    mSubscriberMap.insert(std::pair<bbU64, tsSession*>(feedID, pSession));
 }
 
 void tsNode::Proc(const char* pRawTick, bbUINT tickSize)
 {
-    tsTickUnion tickUnion;
-    tsTick& tick = tickUnion;
-    int headSize = tick.unserializeHead(pRawTick);
-
-    printf("tsNode::%s: %d\n",__FUNCTION__, tick.type());
+    bbU64 feedID = tsTick::unserializeHead_peekFeedID(pRawTick);
+    std::pair<SubscriberMap::const_iterator,SubscriberMap::const_iterator> range = mSubscriberMap.equal_range(feedID);
+    for (SubscriberMap::const_iterator it=range.first; it!=range.second; ++it)
+        it->second->SendOut(pRawTick, tickSize);
 }
 
