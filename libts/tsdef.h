@@ -50,6 +50,13 @@ extern const bbU8 tsgTypeAlign[tsTypeCount];
 
 template <class T> struct tsVecManagedPtr : public std::vector<T*>
 {
+    void clear()
+    {
+        for(typename std::vector<T*>::const_reverse_iterator it = std::vector<T*>::rbegin(); it!=std::vector<T*>::rend(); it++)
+            delete *it;
+        std::vector<T*>::clear();
+    }
+
     ~tsVecManagedPtr()
     {
         for(typename std::vector<T*>::const_reverse_iterator it = std::vector<T*>::rbegin(); it!=std::vector<T*>::rend(); it++)
