@@ -17,6 +17,7 @@ public:
     /** Receive data from socket
         @param socket Socket
         @param timeout Timeout, see tsSocket::recv()
+        @return Number of bytes received, -1 on error, 0 on connection closed
     */
     int receive(tsSocket& socket, int timeout);
 

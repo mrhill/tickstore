@@ -4,12 +4,12 @@
 #include <algorithm>
 
 tsNode::tsNode(tsTickFactory& factory, tsTracker& tracker, tsStore& store)
-  : mFactory(factory),
+  : tsTickReceiver(factory),
+    mFactory(factory),
     mTracker(tracker),
     mStore(store),
     mInPipe(tsSocketType_UDP),
-    mNextSessionID(0),
-    mTickQueue(factory)
+    mNextSessionID(0)
 {
     mInPipe.bind(NULL, 2228);
     std::cout << __FUNCTION__ << ": in pipe listening on UDP " << mInPipe.nameinfo() << std::endl;
@@ -76,10 +76,7 @@ void* tsNode::run()
                 {
                     if (socketSet.testRdFD(mInPipe.fd()))
                     {
-                        char buf[10240];
-                        int bytesReceived = mInPipe.recv(buf, 10240, 0);
-                        printf("mInPipe: %d bytes\n", bytesReceived);
-                        PipeReceive();
+                        tsTickReceiver::receive(mInPipe, 0);
                     }
 
                     if (socketSet.testRdFD(listenSocket.fd()))
@@ -118,8 +115,12 @@ void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
     }
 }
 
-void tsNode::PipeReceive()
+void tsNode::Proc(const char* pRawTick, bbUINT tickSize)
 {
-}
+    tsTickUnion tickUnion;
+    tsTick& tick = tickUnion;
+    int headSize = tick.unserializeHead(pRawTick);
 
+    printf("tsNode::%s: %d\n",__FUNCTION__, tick.type());
+}
 

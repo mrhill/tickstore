@@ -6,13 +6,13 @@
 #include "tsSocket.h"
 #include "tsSession.h"
 #include "tsTracker.h"
-#include "tsTickQueue.h"
+#include "tsTickReceiver.h"
 #include <map>
 
 class tsTickFactory;
 class tsStore;
 
-class tsNode : public tsThread
+class tsNode : public tsThread, protected tsTickReceiver
 {
     tsSocket        mInPipe;
     tsMutex         mNodeMutex;
@@ -20,10 +20,6 @@ class tsNode : public tsThread
     tsTracker&      mTracker;
     tsStore&        mStore;
     int             mNextSessionID;
-
-    bbU64           mBytesReceived;
-    bbU64           mTicksReceived;
-    tsTickQueue     mTickQueue;
 
     typedef std::multimap<bbU64, tsSession*> SubscriberMap;
     SubscriberMap mSubscriberMap;
@@ -34,7 +30,7 @@ class tsNode : public tsThread
     tsVecManagedPtr<tsSession> mInactiveSessions;
 
     virtual void* run();
-    void PipeReceive();
+    virtual void Proc(const char* pRawTick, bbUINT tickSize);
 
     friend class tsSession;
     void CreateSession(int socketFD);
