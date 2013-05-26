@@ -112,6 +112,8 @@ public:
     bool testRdFD(int fd) { return FD_ISSET(fd, &mRdFds); }
     bool testWrFD(int fd) { return FD_ISSET(fd, &mWrFds); }
     int select(int timeoutUs = 0);
+
+    static const unsigned MAXSETSIZE = FD_SETSIZE;
 };
 
 #endif

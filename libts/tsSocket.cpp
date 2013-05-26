@@ -268,6 +268,7 @@ void tsSocket::listen(bbU16 port)
         close();
         throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
     }
+    mpAddrBound = mpAddrInfo;
     mState = (bbU8)tsSocketState_BoundState;
 
     state = ::listen(mSocket, 10);
