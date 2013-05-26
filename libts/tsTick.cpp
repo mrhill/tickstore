@@ -143,8 +143,7 @@ void tsTickAuth::unserializeTail(const char* pBuf)
 
 std::string tsTickAuth::strTail() const
 {
-    std::string str(",uid=");
-    str += mUID + ",pwd=";
+    std::string str = strprintf(",uid=0x%"bbI64"X,pwd=", mUID);
 
     for(int i=0; i<sizeof(mPwdHash); i++)
     {
@@ -167,6 +166,6 @@ void tsTickSubscribe::unserializeTail(const char* pBuf)
 
 std::string tsTickSubscribe::strTail() const
 {
-    return ",feed=" + mFeedID;
+    return strprintf(",feed=0x%"bbI64"X", mFeedID);
 }
 
