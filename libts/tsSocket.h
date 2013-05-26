@@ -72,7 +72,7 @@ public:
 
     std::string nameinfo() const;
 
-    void listen(bbU16 port);
+    void listen(bbU16 port, bbUINT backlog = 16);
     int accept(tsSocket* pSocket = NULL);
 
     /** Send bytes to socket.

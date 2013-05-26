@@ -250,7 +250,7 @@ std::string tsSocket::nameinfo() const
     return str;
 }
 
-void tsSocket::listen(bbU16 port)
+void tsSocket::listen(bbU16 port, bbUINT backlog)
 {
     close();
     mState = (bbU8)tsSocketState_HostLookup;
@@ -271,7 +271,7 @@ void tsSocket::listen(bbU16 port)
     mpAddrBound = mpAddrInfo;
     mState = (bbU8)tsSocketState_BoundState;
 
-    state = ::listen(mSocket, 10);
+    state = ::listen(mSocket, backlog);
     if (state == -1) {
         close();
         throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
