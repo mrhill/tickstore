@@ -31,8 +31,8 @@ class tsMutexLocker
 {
     tsMutex& mMutex;
 public:
-    tsMutexLocker(tsMutex& mutex) : mMutex(mutex) { mutex.lock(); }
-    ~tsMutexLocker() { mMutex.unlock(); }
+    inline tsMutexLocker(tsMutex& mutex) : mMutex(mutex) { mutex.lock(); }
+    inline ~tsMutexLocker() { mMutex.unlock(); }
 };
 
 #endif
