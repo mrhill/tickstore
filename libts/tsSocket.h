@@ -58,7 +58,8 @@ class tsSocket
 public:
     tsSocket(tsSocketType type);
     ~tsSocket();
-    void setSocketDescriptor(int socket);
+    void attachFD(int socket);
+    int detachFD();
     tsSocketState state() const { return (tsSocketState)mState; }
     inline int fd() const { return mSocket; }
     void close();

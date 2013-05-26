@@ -9,7 +9,7 @@ tsSession::tsSession(tsTickFactory& tickFactory, tsNode& node, tsStore& store, i
     mStore(store),
     mSessionID(procID)
 {
-    mSocket.setSocketDescriptor(socketFD);
+    mSocket.attachFD(socketFD);
 
     mInFilter.AddFeed(400);
     mInFilter.AddFeed(29);

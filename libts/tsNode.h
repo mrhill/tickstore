@@ -14,12 +14,18 @@ class tsStore;
 
 class tsNode : public tsThread, protected tsTickReceiver
 {
-    tsSocket        mInPipe;
-    tsMutex         mNodeMutex;
-    tsTickFactory&  mFactory;
-    tsTracker&      mTracker;
-    tsStore&        mStore;
-    int             mNextSessionID;
+    tsSocket         mClientListen;
+    tsSocket         mPipeUDP;
+    tsSocket         mPipeListen;
+    std::vector<int> mPipeTCPConnections;
+    tsMutex          mNodeMutex;
+    tsTickFactory&   mFactory;
+    tsTracker&       mTracker;
+    tsStore&         mStore;
+    int              mNextSessionID;
+
+    static const unsigned MaxClientConnections = tsSocketSet::MAXSETSIZE/2;
+    static const unsigned MaxPipeConnections = tsSocketSet::MAXSETSIZE/2 - 10;
 
     typedef std::multimap<bbU64, tsSession*> SubscriberMap;
     SubscriberMap mSubscriberMap;

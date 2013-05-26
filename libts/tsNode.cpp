@@ -8,11 +8,19 @@ tsNode::tsNode(tsTickFactory& factory, tsTracker& tracker, tsStore& store)
     mFactory(factory),
     mTracker(tracker),
     mStore(store),
-    mInPipe(tsSocketType_UDP),
+    mClientListen(tsSocketType_TCP),
+    mPipeUDP(tsSocketType_UDP),
+    mPipeListen(tsSocketType_TCP),
     mNextSessionID(0)
 {
-    mInPipe.bind(NULL, 2228);
-    std::cout << __FUNCTION__ << ": in pipe listening on UDP " << mInPipe.nameinfo() << std::endl;
+    mClientListen.listen(2227);
+    std::cout << __FUNCTION__ << ": listening on TCP " << mClientListen.nameinfo() << std::endl;
+
+    mPipeUDP.bind(NULL, 2228);
+    std::cout << __FUNCTION__ << ": pipe listening on UDP " << mPipeUDP.nameinfo() << std::endl;
+
+    mPipeListen.listen(2228);
+    std::cout << __FUNCTION__ << ": pipe listening on TCP " << mPipeListen.nameinfo() << std::endl;
 
     start();
 }
@@ -63,34 +71,63 @@ void* tsNode::run()
 {
     try
     {
-        int listenPort = 2227;
-        std::cout << __FUNCTION__ << ": listening for connections on port " << listenPort << ' ' << std::endl;
-        tsSocket listenSocket(tsSocketType_TCP);
-        listenSocket.listen(listenPort);
+        tsSocket tmpSocket(tsSocketType_TCP);
 
         while (!testCancel())
         {
             tsSocketSet socketSet;
-            socketSet.addRdFD(listenSocket.fd());
-            socketSet.addRdFD(mInPipe.fd());
+            socketSet.addRdFD(mClientListen.fd());
+            socketSet.addRdFD(mPipeListen.fd());
+            socketSet.addRdFD(mPipeUDP.fd());
+
+            for(std::vector<int>::const_iterator it = mPipeTCPConnections.begin(); it != mPipeTCPConnections.end(); it++)
+                socketSet.addRdFD(*it);
+
             if (socketSet.select())
             {
                 try
                 {
-                    if (socketSet.testRdFD(mInPipe.fd()))
+                    if (socketSet.testRdFD(mPipeUDP.fd()))
                     {
-                        tsTickReceiver::receive(mInPipe, 0);
+                        tsTickReceiver::receive(mPipeUDP, 0);
                     }
 
-                    if (socketSet.testRdFD(listenSocket.fd()))
+                    for(std::vector<int>::iterator it = mPipeTCPConnections.begin(); it != mPipeTCPConnections.end(); )
                     {
-                        int newSocketOut = listenSocket.accept();
-                        printf("%s: new connection on port %d with fd %d\n", __FUNCTION__, listenPort, newSocketOut);
+                        if (socketSet.testRdFD(*it))
+                        {
+                            tmpSocket.attachFD(*it);
+
+                            if (!tsTickReceiver::receive(tmpSocket, 0))
+                            {
+                                printf("%s: closing pipe TCP connection with fd %d\n", __FUNCTION__, *it);
+                                tmpSocket.close();
+                                it = mPipeTCPConnections.erase(it);
+                                continue;
+                            }
+
+                            tmpSocket.detachFD();
+                        }
+                        it++;
+                    }
+
+                    if (socketSet.testRdFD(mPipeListen.fd()) && (mPipeTCPConnections.size() < MaxPipeConnections))
+                    {
+                        int newSocketPipe = mPipeListen.accept();
+                        printf("%s: new pipe connection on %s with fd %d\n", __FUNCTION__, mPipeListen.nameinfo().c_str(), newSocketPipe);
+                        mPipeTCPConnections.push_back(newSocketPipe);
+                    }
+
+                    if (socketSet.testRdFD(mClientListen.fd()) && (000 < MaxClientConnections)) // xxx count sessions
+                    {
+                        int newSocketOut = mClientListen.accept();
+                        printf("%s: new client connection on %s with fd %d\n", __FUNCTION__, mClientListen.nameinfo().c_str(), newSocketOut);
                         CreateSession(newSocketOut);
                     }
                 }
                 catch(tsSocketException& e)
                 {
+                    tmpSocket.detachFD();
                     printf("%s: %s\n", __FUNCTION__, e.what());
                 }
             }
@@ -102,6 +139,12 @@ void* tsNode::run()
     }
 
     printf("%s: shutting down\n", __FUNCTION__);
+
+    // close all TCP connections for pipe
+    for(std::vector<int>::reverse_iterator it = mPipeTCPConnections.rbegin(); it != mPipeTCPConnections.rend(); it++)
+        ::close(*it);
+    mPipeTCPConnections.clear();
+
     return NULL;
 }
 
@@ -132,7 +175,7 @@ void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
     else
     {
         // subscribe node to feedID
-        std::string node = mInPipe.nameinfo();
+        std::string node = mPipeUDP.nameinfo();
         std::cout << __FUNCTION__ << ": subscribing node for feedID " << feedID << std::endl;
         if (node.size())
             mTracker.Subscribe(node, feedID);

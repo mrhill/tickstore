@@ -289,7 +289,7 @@ int tsSocket::accept(tsSocket* pSocket)
         throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
 
     if (pSocket)
-        pSocket->setSocketDescriptor(newSocket);
+        pSocket->attachFD(newSocket);
 
     return newSocket;
 }
@@ -350,11 +350,19 @@ int tsSocket::recv(char* pBuf, bbU32 bufsize, int timeoutMs)
     return status;
 }
 
-void tsSocket::setSocketDescriptor(int socket)
+void tsSocket::attachFD(int socket)
 {
     close();
     mSocket = socket;
     mState = (bbU8)tsSocketState_Connected;
+}
+
+int tsSocket::detachFD()
+{
+    int fd = mSocket;
+    mSocket = -1;
+    close();
+    return fd;
 }
 
 int tsSocket::peerAddress(std::string& hostName) const
