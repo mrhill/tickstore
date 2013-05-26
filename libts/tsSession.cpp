@@ -53,6 +53,7 @@ void* tsSession::run()
         mSessionID, mSocket.peerName().c_str(), mTickQueue.size());
 
     mNode.DeactivateSession(this);
+    mRunning = 0;
     return NULL;
 }
 

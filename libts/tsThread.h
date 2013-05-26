@@ -12,8 +12,11 @@ class tsThread
     friend void* tsThread_run(void* arg);
 
     pthread_t     mThread;
-    volatile bbU8 mCancel;
-    bbU8          mRunning;
+    volatile int  mCancel;
+protected:
+    int           mRunning;
+
+    virtual void* run() = 0;
 
 public:
     tsThread();
@@ -22,7 +25,8 @@ public:
     void start();
     void join();
     inline void cancel() {  mCancel = 1; }
-    inline bool testCancel() { return mCancel != 0; }
+    inline bool testCancel() const { return mCancel != 0; }
+    inline bool testRunning() const { return mRunning != 0; }
 
     static void msleep(int ms)
     {
@@ -32,10 +36,6 @@ public:
         usleep(ms*1000);
         #endif
     }
-
-protected:
-    virtual void* run() = 0;
-
 };
 
 #endif
