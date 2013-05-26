@@ -42,6 +42,7 @@ public:
     ~tsNode();
 
     void SubscribeFeed(bbU64 feedID, tsSession* pSession);
+    void UnsubscribeAllFeeds(tsSession* pSession);
 };
 
 #endif

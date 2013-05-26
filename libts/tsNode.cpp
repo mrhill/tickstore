@@ -48,14 +48,7 @@ void tsNode::DeactivateSession(tsSession* pSession)
 {
     tsMutexLocker lock(mNodeMutex);
 
-    // unsubscribe all feeds for this session
-    for (SubscriberMap::iterator it=mSubscriberMap.begin(); it!=mSubscriberMap.end(); )
-    {
-        SubscriberMap::iterator it_inc = it; it_inc++;
-        if (it->second == pSession)
-            mSubscriberMap.erase(it);
-        it = it_inc;
-    }
+    UnsubscribeAllFeeds(pSession);
 
     // move session to inactive session list
     std::vector<tsSession*>::iterator it = std::find(mSessions.begin(), mSessions.end(), pSession);
@@ -112,6 +105,18 @@ void* tsNode::run()
     return NULL;
 }
 
+void tsNode::UnsubscribeAllFeeds(tsSession* pSession)
+{
+    // unsubscribe all feeds for this session
+    for (SubscriberMap::iterator it=mSubscriberMap.begin(); it!=mSubscriberMap.end(); )
+    {
+        SubscriberMap::iterator it_inc = it; it_inc++;
+        if (it->second == pSession)
+            mSubscriberMap.erase(it);
+        it = it_inc;
+    }
+}
+
 void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
 {
     tsMutexLocker lock(mNodeMutex);
@@ -140,6 +145,9 @@ void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
 void tsNode::Proc(const char* pRawTick, bbUINT tickSize)
 {
     bbU64 feedID = tsTick::unserializeHead_peekFeedID(pRawTick);
+
+    tsMutexLocker lock(mNodeMutex);
+
     std::pair<SubscriberMap::const_iterator,SubscriberMap::const_iterator> range = mSubscriberMap.equal_range(feedID);
     for (SubscriberMap::const_iterator it=range.first; it!=range.second; ++it)
         it->second->SendOut(pRawTick, tickSize);
