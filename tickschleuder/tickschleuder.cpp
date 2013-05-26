@@ -69,11 +69,13 @@ int main(int argc, char** argv)
         std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_MySQL, "ticks"));
         tsNode node(factory, tracker, *pTickerStore);
 
-        //TestSendThread sender(pTickerStore.get());
-        //sender.start();
+        TestSendThread sender(pTickerStore.get());
+
+        if (argc > 1 && !strcmp(argv[1], "-t"))
+            sender.start();
 
         node.join();
-        //sender.join();
+        sender.join();
     }
     catch(std::exception& e)
     {
