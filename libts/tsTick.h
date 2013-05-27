@@ -24,7 +24,7 @@ struct tsTick
     bbU64       mTime;      //!< Tick timestamp, interpretation depends on tick type
 
     static const int MAXSIZE = 160; //!< Maximum byte size of tsTick derivated classes, see tsTickUnion
-    static const int SERIALIZEDPREFIX = 2+2; // u16 type, u16 serialized size (excl. this word)
+    static const int SERIALIZEDPREFIX = 2+2; // u16 type, u16 serialized size (incl. this word)
     static const int SERIALIZEDHEADSIZE = SERIALIZEDPREFIX+8+8+4+8; // u64 feedid, u64 symid, u32 count, u64 time
     static const int SERIALIZEDMAXSIZE = MAXSIZE;
 

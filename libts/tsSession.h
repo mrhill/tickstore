@@ -9,11 +9,10 @@
 
 class tsNode;
 
-class tsSession : protected tsThread, protected tsTickReceiver
+class tsSession : protected tsThread, protected tsTickReceiver, protected tsTickListener
 {
     friend class tsNode;
 
-    tsSocket        mSocket;
     tsNode&         mNode;
     tsStore&        mStore;
 
@@ -60,7 +59,7 @@ class tsSession : protected tsThread, protected tsTickReceiver
     void SubscribeFeed(bbU64 feedID);
 
     virtual void* run();
-    virtual void Proc(const char* pRawTick, bbUINT tickSize);
+    virtual void ProcessTick(const char* pRawTick, bbUINT tickSize);
 
 protected:
     void SendOut(const char* pRawTick, bbUINT tickSize);

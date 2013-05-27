@@ -1,12 +1,13 @@
 #include "tsTickReceiver.h"
 #include <iostream>
 
-tsTickReceiver::tsTickReceiver(tsTickFactory& tickFactory, const char* pQueueName)
-  : mTickQueue(tickFactory, pQueueName)
+tsTickReceiver::tsTickReceiver(tsTickFactory& tickFactory, tsTickListener* pListener, int socketFD, const char* pQueueName)
+  : mSocket(tsSocketType_TCP), mpListener(pListener), mTickQueue(tickFactory, pQueueName)
 {
+    mSocket.attachFD(socketFD);
 }
 
-int tsTickReceiver::receive(tsSocket& socket, int timeout)
+int tsTickReceiver::receiveTicks(int timeout)
 {
     tsTickQueue::BufDesc qtail;
 
@@ -19,7 +20,7 @@ int tsTickReceiver::receive(tsSocket& socket, int timeout)
         bbASSERT(check);
     }
 
-    int bytesReceived = socket.recv(qtail.pFirst, qtail.sizeFirst, timeout);
+    int bytesReceived = mSocket.recv(qtail.pFirst, qtail.sizeFirst, timeout);
     if (bytesReceived < 0) // 0 if connection closed
     {
         printf("%s %s: mSocket.recv first timeout\n", __FUNCTION__, mTickQueue.name());
@@ -28,7 +29,7 @@ int tsTickReceiver::receive(tsSocket& socket, int timeout)
 
     if ((bytesReceived == qtail.sizeFirst) && qtail.sizeSecond) // more bytes may be pending on circular buffer wrap
     {
-        int bytesReceivedTail = socket.recv(qtail.pSecond, qtail.sizeSecond, 0);
+        int bytesReceivedTail = mSocket.recv(qtail.pSecond, qtail.sizeSecond, 0);
         if (bytesReceivedTail > 0) // 0 if connection closed or no byte available
             bytesReceived += bytesReceivedTail;
     }
@@ -49,7 +50,7 @@ int tsTickReceiver::receive(tsSocket& socket, int timeout)
             }
             break; // not enough data in q to deserialize a tick
         }
-        Proc(pRawTick, frontSize);
+        mpListener->ProcessTick(pRawTick, frontSize);
         mTickQueue.pop(frontSize);
         mTicksReceived++;
 

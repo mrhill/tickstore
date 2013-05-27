@@ -8,16 +8,18 @@
 #include "tsTracker.h"
 #include "tsTickReceiver.h"
 #include <map>
+#include <list>
 
 class tsTickFactory;
 class tsStore;
 
-class tsNode : public tsThread, protected tsTickReceiver
+class tsNode : public tsThread, public tsTickListener
 {
     tsSocket         mClientListen;
-    tsSocket         mPipeUDP;
     tsSocket         mPipeListen;
-    std::vector<int> mPipeTCPConnections;
+
+    std::list<tsTickReceiver*> mPipeTCPConnections;
+
     tsMutex          mNodeMutex;
     tsTickFactory&   mFactory;
     tsTracker&       mTracker;
@@ -36,7 +38,7 @@ class tsNode : public tsThread, protected tsTickReceiver
     tsVecManagedPtr<tsSession> mInactiveSessions;
 
     virtual void* run();
-    virtual void Proc(const char* pRawTick, bbUINT tickSize);
+    virtual void ProcessTick(const char* pRawTick, bbUINT tickSize);
 
     friend class tsSession;
     void CreateSession(int socketFD);

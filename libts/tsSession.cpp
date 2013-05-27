@@ -3,14 +3,11 @@
 #include <iostream>
 
 tsSession::tsSession(tsTickFactory& tickFactory, tsNode& node, tsStore& store, int socketFD, int procID)
-  : tsTickReceiver(tickFactory),
-    mSocket(tsSocketType_TCP),
+  : tsTickReceiver(tickFactory, this, socketFD),
     mNode(node),
     mStore(store),
     mSessionID(procID)
 {
-    mSocket.attachFD(socketFD);
-
     mInFilter.AddFeed(400);
     mInFilter.AddFeed(29);
     mInFilter.AddFeed(0x42);
@@ -34,7 +31,7 @@ void* tsSession::run()
     {
         while (!testCancel() && (connected || !mTickQueue.empty()))
         {
-            int bytesReceived = tsTickReceiver::receive(mSocket, 1000);
+            int bytesReceived = receiveTicks(1000);
             if (bytesReceived <= 0)
             {
                 if (bytesReceived == 0)
@@ -57,7 +54,7 @@ void* tsSession::run()
     return NULL;
 }
 
-void tsSession::Proc(const char* pRawTick, bbUINT tickSize)
+void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
 {
     tsTickUnion tickUnion;
     tsTick& tick = tickUnion;
