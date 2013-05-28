@@ -20,7 +20,6 @@ tsNode::tsNode(tsTickFactory& factory, tsTracker& tracker, tsStore& store)
 
 tsNode::~tsNode()
 {
-    mSessions.clear();
 }
 
 void* tsNode::run()

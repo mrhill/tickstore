@@ -2,7 +2,6 @@
 #define tsNode_H
 
 #include "tsdef.h"
-#include "tsMutex.h"
 #include "tsSocket.h"
 #include "tsSession.h"
 #include "tsTracker.h"

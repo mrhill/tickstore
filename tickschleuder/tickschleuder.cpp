@@ -1,12 +1,10 @@
-#include "tsStoreMemory.h"
-#include "tsTickReceiver.h"
+#include "tsStore.h"
 #include "tsThread.h"
 #include "tsTickSender.h"
 #include "tsTickFinance.h"
 #include "tsTracker.h"
 #include "tsNode.h"
 #include <memory>
-#include <vector>
 #include <iostream>
 #include <stdexcept>
 

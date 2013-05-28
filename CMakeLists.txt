@@ -10,4 +10,4 @@ add_subdirectory(libts)
 add_subdirectory(tstest)
 add_subdirectory(testmysql)
 add_subdirectory(tickschleuder)
-
+add_subdirectory(tickstore)
