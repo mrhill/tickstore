@@ -74,14 +74,7 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
         if (mInFilter.isAllowed(tick.objID().feedID()))
         {
             mInFilter.mLastFeedIDCache = tick.objID().feedID();
-            try
-            {
-                mStore.SaveTick(pRawTick, tickSize);
-            }
-            catch (tsStoreException& e)
-            {
-                std::cout << __FUNCTION__ << ": " << e.what();
-            }
+            mNode.ProcessTick(pRawTick, tickSize);
         }
         break;
     }
