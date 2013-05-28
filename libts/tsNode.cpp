@@ -80,7 +80,7 @@ void* tsNode::run()
                     mPipeTCPConnections.push_back(pReceiver);
                 }
 
-                if (socketSet.testRdFD(mClientListen.fd()) && (000 < MaxClientConnections)) // xxx count sessions
+                if (socketSet.testRdFD(mClientListen.fd()) && (mSessions.size() < MaxClientConnections))
                 {
                     int newSocketOut = mClientListen.accept();
                     printf("%s: new client connection on %s with fd %d\n", __FUNCTION__, mClientListen.nameinfo().c_str(), newSocketOut);
