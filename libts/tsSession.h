@@ -3,16 +3,13 @@
 
 #include "tsdef.h"
 #include "tsStore.h"
-#include "tsThread.h"
 #include "tsTickReceiver.h"
 #include <set>
 
 class tsNode;
 
-class tsSession : protected tsThread, protected tsTickReceiver, protected tsTickListener
+class tsSession : public tsTickReceiver, protected tsTickListener
 {
-    friend class tsNode;
-
     tsNode&         mNode;
     tsStore&        mStore;
 
@@ -58,15 +55,13 @@ class tsSession : protected tsThread, protected tsTickReceiver, protected tsTick
 
     void SubscribeFeed(bbU64 feedID);
 
-    virtual void* run();
     virtual void ProcessTick(const char* pRawTick, bbUINT tickSize);
-
-protected:
-    void SendOut(const char* pRawTick, bbUINT tickSize);
 
 public:
     tsSession(tsTickFactory& tickFactory, tsNode& node, tsStore& store, int fd, int procID);
     ~tsSession();
+
+    void SendTick(const char* pRawTick, bbUINT tickSize);
 };
 
 #endif

@@ -11,47 +11,10 @@ tsSession::tsSession(tsTickFactory& tickFactory, tsNode& node, tsStore& store, i
     mInFilter.AddFeed(400);
     mInFilter.AddFeed(29);
     mInFilter.AddFeed(0x42);
-
-    start();
 }
 
 tsSession::~tsSession()
 {
-    cancel();
-    join();
-}
-
-void* tsSession::run()
-{
-    bool connected = true;
-
-    printf("%s %d: connection from %s\n", __FUNCTION__, mSessionID, mSocket.peerName().c_str());
-
-    try
-    {
-        while (!testCancel() && (connected || !mTickQueue.empty()))
-        {
-            int bytesReceived = receiveTicks(1000);
-            if (bytesReceived <= 0)
-            {
-                if (bytesReceived == 0)
-                    connected = false;
-                else
-                    continue; // timeout
-            }
-        }
-    }
-    catch(tsSocketException& e)
-    {
-        printf("%s %d: exception '%s'\n", __FUNCTION__, mSessionID, e.what());
-    }
-
-    printf("%s %d: shutting down connection from %s (%d bytes left in q)\n", __FUNCTION__,
-        mSessionID, mSocket.peerName().c_str(), mTickQueue.size());
-
-    mNode.DeactivateSession(this);
-    mRunning = 0;
-    return NULL;
 }
 
 void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
@@ -124,7 +87,7 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
     }
 }
 
-void tsSession::SendOut(const char* pRawTick, bbUINT tickSize)
+void tsSession::SendTick(const char* pRawTick, bbUINT tickSize)
 {
     try
     {
