@@ -43,8 +43,7 @@ void* tsTickSender::run()
                     if (bbLD16LE(pTickSerialized) == tsTickType_Diag)
                     {
                         bbU64 t = tsTime::currentNs();
-                        bbST32LE(pTickSerialized+tsTick::SERIALIZEDHEADSIZE, (bbU32)t);
-                        bbST32LE(pTickSerialized+tsTick::SERIALIZEDHEADSIZE+4, (bbU32)(t>>32));
+                        bbST64LE(pTickSerialized+tsTick::SERIALIZEDHEADSIZE, t);
 
                         /*if (mLogLevel)
                         {
@@ -95,10 +94,13 @@ void tsTickSender::sendUnprotected(tsTick& tick)
     tick.setCount(mTickCount);
 
     int retry = 0;
+    int timeout = 100;
     while (!mTickQueue.push(tick))
     {
         printf("%s: queue full, retry %d\n", __FUNCTION__, ++retry);
-        tsThread::msleep(100);
+        tsThread::msleep(timeout);
+        if (timeout < 3200)
+            timeout <<= 1;
     }
 
     mTickCount++;
@@ -120,4 +122,3 @@ void tsTickSender::send(tsTick& tick)
         sendDiagTick();
     sendUnprotected(tick);
 }
-
