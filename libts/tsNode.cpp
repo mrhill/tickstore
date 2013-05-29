@@ -118,7 +118,7 @@ void tsNode::UnsubscribeAllFeeds(tsSession* pSession)
 
 void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
 {
-    std::pair<SubscriberMap::const_iterator,SubscriberMap::const_iterator> range = mSubscriberMap.equal_range(feedID);
+    std::pair<SubscriberMap::iterator,SubscriberMap::iterator> range = mSubscriberMap.equal_range(feedID);
 
     if (range.first != range.second) // node already subscribing to feedID?
     {
@@ -137,7 +137,11 @@ void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
     }
 
     // map feedID to session
-    mSubscriberMap.insert(std::pair<bbU64, tsSession*>(feedID, pSession));
+#if __cplusplus > 199711L
+    mSubscriberMap.insert(range.second, std::pair<bbU64, tsSession*>(feedID, pSession));
+#else
+    mSubscriberMap.insert(range.first, std::pair<bbU64, tsSession*>(feedID, pSession));
+#endif
 }
 
 void tsNode::ProcessTick(const char* pRawTick, bbUINT tickSize)
@@ -148,4 +152,3 @@ void tsNode::ProcessTick(const char* pRawTick, bbUINT tickSize)
     for (SubscriberMap::const_iterator it=range.first; it!=range.second; ++it)
         it->second->SendTick(pRawTick, tickSize);
 }
-
