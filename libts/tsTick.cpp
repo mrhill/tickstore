@@ -9,10 +9,11 @@ std::string tsObjID::str() const
 std::string tsTick::str() const
 {
     tsTime time(mTime);
-    return strprintf("tt=%d,feed=0x%08X%08X,sym=0x%08X%08X,count=%u,time=%s",
+    return strprintf("tt=%d,feed=0x%08X%08X,sym=0x%08X%08X,q=0x%08X%08X,count=%u,time=%s",
                      (int)mType,
                      (bbU32)(mObjID.feedID()>>32), (bbU32)mObjID.feedID(),
                      (bbU32)(mObjID.symbolID()>>32), (bbU32)mObjID.symbolID(),
+                     (bbU32)(queryID()>>32), (bbU32)queryID(),
                      mCount,
                      time.str().c_str());
 }
@@ -25,6 +26,7 @@ int tsTick::serializeHead(char* pBuf, int tailSize) const
 
     bbST64LE(pBuf, mObjID.feedID()); pBuf+=8;
     bbST64LE(pBuf, mObjID.symbolID()); pBuf+=8;
+    bbST64LE(pBuf, mQueryID); pBuf+=8;
     bbST32LE(pBuf, mCount); pBuf+=4;
     bbST64LE(pBuf, mTime);
 
@@ -38,6 +40,7 @@ int tsTick::unserializeHead(const char* pBuf)
 
     mObjID.setFeedID(bbLD64LE(pBuf)); pBuf+=8;
     mObjID.setSymbolID(bbLD64LE(pBuf)); pBuf+=8;
+    mQueryID = bbLD64LE(pBuf); pBuf+=8;
     mCount = bbLD32LE(pBuf); pBuf+=4;
     mTime = bbLD64LE(pBuf);
 

@@ -97,6 +97,6 @@ void tsSession::SendTick(const char* pRawTick, bbUINT tickSize)
 
 void tsSession::SubscribeFeed(bbU64 feedID)
 {
-    mNode.SubscribeFeed(feedID, this);
+    mNode.SubscribeFeed(feedID, 0, this);
 }
 

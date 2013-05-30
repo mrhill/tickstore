@@ -26,7 +26,8 @@ class tsNode : public tsTickListener
     static const unsigned MaxClientConnections = tsSocketSet::MAXSETSIZE/2;
     static const unsigned MaxPipeConnections = tsSocketSet::MAXSETSIZE/2 - 10;
 
-    typedef std::multimap<bbU64, tsSession*> SubscriberMap;
+    typedef std::pair<bbU64, bbU64> SubscriberKey;
+    typedef std::multimap<SubscriberKey, tsSession*> SubscriberMap;
     SubscriberMap mSubscriberMap;
 
 
@@ -37,7 +38,7 @@ public:
 
     virtual void ProcessTick(const char* pRawTick, bbUINT tickSize);
 
-    void SubscribeFeed(bbU64 feedID, tsSession* pSession);
+    void SubscribeFeed(bbU64 feedID, bbU64 queryID, tsSession* pSession);
     void UnsubscribeAllFeeds(tsSession* pSession);
 };
 

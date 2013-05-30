@@ -25,20 +25,27 @@ struct tsTick
     tsObjID     mObjID;     //!< Object ID
     bbU16       mType;      //!< Tick type, see tsTickType
     bbU32       mCount;     //!< Tick stream counter, intended for debug
+    bbU64       mQueryID;   //!< Query ID or 0 for none
     bbU64       mTime;      //!< Tick timestamp, interpretation depends on tick type
 
     static const int MAXSIZE = 160; //!< Maximum byte size of tsTick derivated classes, see tsTickUnion
     static const int SERIALIZEDPREFIX = 2+2; // u16 type, u16 serialized size (incl. this word)
-    static const int SERIALIZEDHEADSIZE = SERIALIZEDPREFIX+8+8+4+8; // u64 feedid, u64 symid, u32 count, u64 time
+    static const int SERIALIZEDHEADSIZE = SERIALIZEDPREFIX+8+8+8+4+8; // u64 feedid, u64 symid, u64 qid, u32 count, u64 time
     static const int SERIALIZEDMAXSIZE = MAXSIZE;
 
-    tsTick(bbU16 type = tsTickType_None) : mType(type), mCount(0), mTime(0) {}
-    tsTick(const tsObjID& objID, bbU16 type = tsTickType_None) : mObjID(objID), mType(type), mCount(0), mTime(0) {}
+    static inline bbU64 unserializeHead_peekFeedID(const char* pBuf) { return bbLD64LE(pBuf + SERIALIZEDPREFIX); }
+    static inline bbU64 unserializeHead_peekQueryID(const char* pBuf) { return bbLD64LE(pBuf + SERIALIZEDPREFIX + 16); }
+
+    tsTick(bbU16 type = tsTickType_None) : mType(type), mCount(0), mQueryID(0), mTime(0) {}
+    tsTick(const tsObjID& objID, bbU16 type = tsTickType_None) : mObjID(objID), mType(type), mCount(0), mQueryID(0), mTime(0) {}
 
     inline bbU16 type() const { return mType; }
 
     inline const tsObjID& objID() const { return mObjID; }
     inline void setObjID(const tsObjID& objID) { mObjID=objID; }
+
+    inline bbU64 queryID() const { return mQueryID; }
+    inline void setQueryID(bbU64 queryID) { mQueryID = queryID; }
 
     inline bbU32 count() const { return mCount; }
     inline void setCount(bbU32 count) { mCount = count; }
@@ -50,11 +57,6 @@ struct tsTick
     std::string str() const;
     int serializeHead(char* pBuf, int tailSize) const;
     int unserializeHead(const char* pBuf);
-
-    static inline bbU64 unserializeHead_peekFeedID(const char* pBuf)
-    {
-        return bbLD64LE(pBuf + SERIALIZEDPREFIX);
-    }
 
     friend class tsTickQueue;
 };

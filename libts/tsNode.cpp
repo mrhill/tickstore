@@ -115,9 +115,10 @@ void tsNode::UnsubscribeAllFeeds(tsSession* pSession)
     }
 }
 
-void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
+void tsNode::SubscribeFeed(bbU64 feedID, bbU64 queryID, tsSession* pSession)
 {
-    std::pair<SubscriberMap::iterator,SubscriberMap::iterator> range = mSubscriberMap.equal_range(feedID);
+    SubscriberKey key = SubscriberKey(feedID, queryID);
+    std::pair<SubscriberMap::iterator,SubscriberMap::iterator> range = mSubscriberMap.equal_range(key);
 
     if (range.first != range.second) // node already subscribing to feedID?
     {
@@ -126,7 +127,7 @@ void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
             if (it->second == pSession)
                 return;
     }
-    else
+    else if (queryID == 0) // rt feed or query?
     {
         // subscribe node to feedID
         std::string node = mPipeListen.nameinfo();
@@ -135,19 +136,19 @@ void tsNode::SubscribeFeed(bbU64 feedID, tsSession* pSession)
             mTracker.Subscribe(node, feedID);
     }
 
-    // map feedID to session
+    // map feed to session
 #if __cplusplus > 199711L
-    mSubscriberMap.insert(range.second, std::pair<bbU64, tsSession*>(feedID, pSession));
+    mSubscriberMap.insert(range.second, std::pair<SubscriberKey, tsSession*>(key, pSession));
 #else
-    mSubscriberMap.insert(range.first, std::pair<bbU64, tsSession*>(feedID, pSession));
+    mSubscriberMap.insert(range.first, std::pair<SubscriberKey, tsSession*>(key, pSession));
 #endif
 }
 
 void tsNode::ProcessTick(const char* pRawTick, bbUINT tickSize)
 {
-    bbU64 feedID = tsTick::unserializeHead_peekFeedID(pRawTick);
+    SubscriberKey key = SubscriberKey(tsTick::unserializeHead_peekFeedID(pRawTick), tsTick::unserializeHead_peekQueryID(pRawTick));
 
-    std::pair<SubscriberMap::const_iterator,SubscriberMap::const_iterator> range = mSubscriberMap.equal_range(feedID);
+    std::pair<SubscriberMap::const_iterator,SubscriberMap::const_iterator> range = mSubscriberMap.equal_range(key);
     for (SubscriberMap::const_iterator it=range.first; it!=range.second; ++it)
         it->second->SendTick(pRawTick, tickSize);
 }
