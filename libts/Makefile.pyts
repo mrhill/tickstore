@@ -14,5 +14,5 @@ TARGET = pyts
 $(TARGET).so: $(TARGET).o
 	g++ -shared -Wl,--export-dynamic $(TARGET).o libts.a $(BABEL_LIB)/libbabel.a -L$(BOOST_LIB) -lboost_python-py27 -L/usr/lib/python$(PYTHON_VERSION)/config -lpython$(PYTHON_VERSION) -lrt -o $(TARGET).so
  
-$(TARGET).o: $(TARGET).cxx tsTickFinance.cxx
+$(TARGET).o: $(TARGET).cxx tsTickFactory.cxx
 	g++ -I$(PYTHON_INCLUDE) -I$(BOOST_INC) -I$(BABEL_INCLUDE) -fPIC -c $(TARGET).cxx

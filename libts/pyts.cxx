@@ -3,13 +3,10 @@
 #include <boost/python.hpp>
 #include "tsTime.h"
 #include "tsTickSender.h"
-#include "tsTickFinance.h"
 
 using namespace boost::python;
 
-static tsTickFactoryFinance tickFactoryFinance;
-
-struct tsTickSenderFinance : public tsTickSender
+struct pytsTickSender : public tsTickSender
 {
     static std::string getScriptName()
     {
@@ -27,17 +24,17 @@ struct tsTickSenderFinance : public tsTickSender
         return s;
     }
 
-    tsTickSenderFinance()
-      : tsTickSender(tickFactoryFinance, getScriptName().c_str(), "localhost", 2227)
+    pytsTickSender()
+      : tsTickSender(getScriptName().c_str(), "localhost", 2227)
     {
     }
 
-    tsTickSenderFinance(const char* host, int port = 2227)
-      : tsTickSender(tickFactoryFinance, getScriptName().c_str(), host, port)
+    pytsTickSender(const char* host, int port = 2227)
+      : tsTickSender(getScriptName().c_str(), host, port)
     {}
 
-    tsTickSenderFinance(const char* queueName, const char* host, int port = 2227)
-      : tsTickSender(tickFactoryFinance, queueName, host, port)
+    pytsTickSender(const char* queueName, const char* host, int port = 2227)
+      : tsTickSender(queueName, host, port)
     {}
 };
 
@@ -90,7 +87,7 @@ BOOST_PYTHON_MODULE(pyts)
 
     #include "tsTickFactory.cxx"
 
-    class_<tsTickSenderFinance>("tsTickSender")
+    class_<pytsTickSender>("tsTickSender")
         .def(init<const char*, int>())
         .def(init<const char*, const char*, int>())
         .def("send", &tsTickSender::send)
