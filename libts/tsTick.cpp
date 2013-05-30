@@ -44,72 +44,6 @@ int tsTick::unserializeHead(const char* pBuf)
     return tsTick::SERIALIZEDHEADSIZE;
 }
 
-int tsTickFactory::serializedTailSize(const tsTick& tick) const
-{
-    switch(tick.mType)
-    {
-    case tsTickType_Diag: return tsTickDiag::tailSize;
-    case tsTickType_Auth: return tsTickAuth::tailSize;
-    case tsTickType_Subscribe: return tsTickSubscribe::tailSize;
-    default: return 0;
-    }
-}
-
-void tsTickFactory::serializeTail(const tsTick* pTick, char* pBuf) const
-{
-    switch(pTick->mType)
-    {
-    case tsTickType_Diag: static_cast<const tsTickDiag*>(pTick)->serializeTail(pBuf); break;
-    case tsTickType_Auth: static_cast<const tsTickAuth*>(pTick)->serializeTail(pBuf); break;
-    case tsTickType_Subscribe: static_cast<const tsTickSubscribe*>(pTick)->serializeTail(pBuf); break;
-    }
-}
-
-void tsTickFactory::unserializeTail(const char* pBuf, tsTick* pTick) const
-{
-    switch(pTick->mType)
-    {
-    case tsTickType_Diag: static_cast<tsTickDiag*>(pTick)->unserializeTail(pBuf); break;
-    case tsTickType_Auth: static_cast<tsTickAuth*>(pTick)->unserializeTail(pBuf); break;
-    case tsTickType_Subscribe: static_cast<tsTickSubscribe*>(pTick)->unserializeTail(pBuf); break;
-    }
-}
-
-std::string tsTickFactory::strTail(const tsTick* pTick) const
-{
-    switch(pTick->mType)
-    {
-    case tsTickType_Diag: return static_cast<const tsTickDiag*>(pTick)->strTail();
-    case tsTickType_Auth: return static_cast<const tsTickAuth*>(pTick)->strTail();
-    case tsTickType_Subscribe: return static_cast<const tsTickSubscribe*>(pTick)->strTail();
-    default: return "";
-    }
-}
-
-void tsTickFactory::serialize(const tsTick& tick, char* pBuf) const
-{
-    pBuf += tick.serializeHead(pBuf, serializedTailSize(tick));
-    serializeTail(&tick, pBuf);
-}
-
-int tsTickFactory::unserialize(const char* pBuf, tsTick* pTick) const
-{
-    int tickSize = bbLDA16LE(pBuf+2);
-
-    if (pTick)
-    {
-        pBuf += pTick->unserializeHead(pBuf);
-        unserializeTail(pBuf, pTick);
-    }
-
-    return tickSize;
-}
-
-std::string tsTickFactory::str(const tsTick& tick) const
-{
-    return tick.str() + strTail(&tick);
-}
-
 void tsTickDiag::serializeTail(char* pBuf) const
 {
     bbST64LE(pBuf, mSendTime); pBuf+=8;
@@ -168,4 +102,3 @@ std::string tsTickSubscribe::strTail() const
 {
     return strprintf(",feed=0x%"bbI64"X", mFeedID);
 }
-

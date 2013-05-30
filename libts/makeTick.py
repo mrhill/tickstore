@@ -1,6 +1,58 @@
 #!/usr/bin/python
 from string import Template
 
+tickTypes = [
+
+    'tsTickTypeDomain_Finance',
+
+    {'name': 'Price', 'scheme':
+        """double price
+           bbU32  opt""" },
+
+    {'name': 'Volume', 'scheme':
+        """bbU64  volume
+           bbU32  opt""" },
+
+    {'name': 'PriceVolume', 'scheme':
+        """double price
+           bbU64  volume
+           bbU32  opt""" },
+
+    {'name': 'Bid', 'scheme':
+        """double price
+           bbU64  volume
+           bbU32  opt""" },
+
+    {'name': 'Ask', 'scheme':
+        """double price
+           bbU64  volume
+           bbU32  opt""" },
+
+    {'name': 'BidAsk', 'scheme':
+        """double priceBid
+           double priceAsk
+           bbU32  opt""" },
+
+    {'name': 'Recap', 'scheme':
+        """double open
+           double high
+           double low
+           double close
+           bbU64  volume
+           bbU64  openInt
+           bbU32  opt""" },
+
+    'tsTickTypeDomain_KPI',
+
+    {'name': 'S32', 'scheme':
+        """bbS32  count
+           bbU32  opt""" },
+
+    {'name': 'F64', 'scheme':
+        """double value
+           bbU32  opt""" },
+]
+
 typeMap = {
     'bbU8'  : [1, 0, '%u'],
     'bbU16' : [2, 0, '%u'],
@@ -69,6 +121,8 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 	if not headerTempl.endswith("h.templ") or not cppTempl.endswith("cpp.templ"):
 		print "headerTempl and cppTempl filename must end with [.h|.cpp].templ"
 		return False
+
+	tickDomain = ''
 	tickTypeDefs = ''
 	tickClassDefs = ''
 
@@ -80,6 +134,12 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 	tickPyClassImpl = ''
 
 	for tickType in tickTypes:
+
+		if type(tickType)==str:
+			tickDomain = tickType
+			tickTypeDefs += "\n    " + tickDomain + '0 = ' + tickDomain + "-1,\n\n"
+			continue
+
 		name = tickType['name']
 		scheme = getAttrList(tickType['scheme'])
 
@@ -170,3 +230,5 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 	open(cppTempl.replace("cpp.templ","cxx"), "w").write(tickPyClassImpl)
 
 	return True
+
+makeTicks(tickTypes, "tsTickFactory.h.templ", "tsTickFactory.cpp.templ")

@@ -1,8 +1,8 @@
 #include "tsTickReceiver.h"
 #include <iostream>
 
-tsTickReceiver::tsTickReceiver(tsTickFactory& tickFactory, tsTickListener* pListener, int socketFD, const char* pQueueName)
-  : mSocket(tsSocketType_TCP), mpListener(pListener), mTickQueue(tickFactory, pQueueName)
+tsTickReceiver::tsTickReceiver(tsTickListener* pListener, int socketFD, const char* pQueueName)
+  : mSocket(tsSocketType_TCP), mpListener(pListener), mTickQueue(pQueueName)
 {
     mSocket.attachFD(socketFD);
 }

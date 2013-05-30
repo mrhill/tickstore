@@ -3,8 +3,8 @@
 #include <stdexcept>
 #include <errno.h>
 
-tsStoreFile::tsStoreFile(tsTickFactory& tickFactory, const char* pFilePath)
-  : tsStore(tickFactory), mpFilePath(pFilePath), mhFile(NULL)
+tsStoreFile::tsStoreFile(const char* pFilePath)
+  : mpFilePath(pFilePath), mhFile(NULL)
 {
     mhFile = fopen(pFilePath, "ab");
     if (!mhFile)
@@ -42,7 +42,7 @@ void tsStoreFile::SaveTick(const char* pRawTick, bbUINT tickSize)
         }
 
         //xxx
-        int tickSize = mTickFactory.serializedSize(tick);
+        int tickSize = tsTickFactory::serializedSize(tick);
         pTable->reserve(tickSize);
         do { pTable->push_back(*pRawTick++); } while (--tickSize);
     }

@@ -27,7 +27,7 @@ class tsTickSender : protected tsThread
     void sendDiagTick();
 
 public:
-    tsTickSender(tsTickFactory& tickFactory, const char* pQueueName, const char* pHostAdr, int port = 2227);
+    tsTickSender(const char* pQueueName, const char* pHostAdr, int port = 2227);
     ~tsTickSender();
 
     void send(tsTick& tick);

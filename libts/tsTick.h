@@ -13,7 +13,11 @@ enum tsTickType
     tsTickType_Diag,        //!< Diagnostics tick, see tsTickDiag
     tsTickType_Auth,        //!< User authentication, see tsTickAuth
     tsTickType_Subscribe,   //!< Feed subscription, see tsTickSubscribe
-    tsTickTypeFirst = 16    //!< First ID for domain specific tick types
+
+    tsTickTypeDomain_Finance = 0x20,
+    tsTickTypeDomain_Product = 0x200,
+    tsTickTypeDomain_Geo     = 0x300,
+    tsTickTypeDomain_KPI     = 0x400,
 };
 
 struct tsTick
@@ -139,19 +143,7 @@ union tsTickUnion
     operator tsTick&() { return *(tsTick*)this; }
 };
 
-class tsTickFactory
-{
-protected:
-    virtual int  serializedTailSize(const tsTick& tick) const;
-    virtual void serializeTail(const tsTick* pTick, char* pBuf) const;
-    virtual std::string strTail(const tsTick* pTick) const;
-public:
-    virtual void unserializeTail(const char* pBuf, tsTick* pTick) const;
-    int         serializedSize(const tsTick& tick) const { return serializedTailSize(tick) + tsTick::SERIALIZEDHEADSIZE; }
-    void        serialize(const tsTick& tick, char* pBuf) const;
-    int         unserialize(const char* pBuf, tsTick* pTick) const;
-    std::string str(const tsTick& tick) const;
-};
+#include "tsTickFactory.h"
 
 inline std::ostream& operator<<(std::ostream& os, const tsTick& tick) { os<<tick.str(); return os; }
 

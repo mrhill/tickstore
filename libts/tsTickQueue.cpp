@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdexcept>
 
-tsTickQueue::tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName, bool logToFile, bbUINT bufsize)
-  : mTickFactory(tickFactory), mpBuf(NULL), mSize(bufsize), mRd(0), mWr(0), mLogFD(NULL)
+tsTickQueue::tsTickQueue(const char* pQueueName, bool logToFile, bbUINT bufsize)
+  : mpBuf(NULL), mSize(bufsize), mRd(0), mWr(0), mLogFD(NULL)
 {
     if (!bbIsPwr2(bufsize))
         throw std::runtime_error(strprintf("%s: queue buffer size %d is not power of 2\n", __FUNCTION__, bufsize));
@@ -32,14 +32,14 @@ bool tsTickQueue::push(const tsTick& tick)
     bbUINT rd = mRd;
     bbUINT wr = mWr;
     bbUINT left = mSize - ((wr-rd)&(mSize-1));
-    bbUINT const tickSize = mTickFactory.serializedSize(tick);
+    bbUINT const tickSize = tsTickFactory::serializedSize(tick);
 
     if (tickSize >= left)
         return false;
 
     if ((mWr+tickSize) <= mSize)
     {
-        mTickFactory.serialize(tick, mpBuf + wr);
+        tsTickFactory::serialize(tick, mpBuf + wr);
 
         if (mLogFD)
             fwrite(mpBuf + wr, tickSize, 1, mLogFD);
@@ -49,7 +49,7 @@ bool tsTickQueue::push(const tsTick& tick)
         bbUINT firstPart = mSize-wr;
 
         char wrapBuf[tsTick::SERIALIZEDMAXSIZE];
-        mTickFactory.serialize(tick, wrapBuf);
+        tsTickFactory::serialize(tick, wrapBuf);
 
         memcpy(mpBuf + wr, wrapBuf, firstPart);
         memcpy(mpBuf, wrapBuf + firstPart, tickSize-firstPart);
@@ -139,7 +139,7 @@ int tsTickQueue::frontSize()
 
     if ((rd + tsTick::SERIALIZEDPREFIX) <= mSize)
     {
-        tickSize = mTickFactory.unserialize(mpBuf+rd, NULL);
+        tickSize = tsTickFactory::unserialize(mpBuf+rd, NULL);
     }
     else
     {
@@ -147,7 +147,7 @@ int tsTickQueue::frontSize()
         char wrapBuf[tsTick::SERIALIZEDHEADSIZE];
         memcpy(wrapBuf, mpBuf + rd, firsPart);
         memcpy(wrapBuf+firsPart, mpBuf, tsTick::SERIALIZEDPREFIX-firsPart);
-        tickSize = mTickFactory.unserialize(wrapBuf, NULL);
+        tickSize = tsTickFactory::unserialize(wrapBuf, NULL);
     }
 
     if ((tickSize > tsTick::SERIALIZEDMAXSIZE) || (tickSize < tsTick::SERIALIZEDHEADSIZE))
@@ -173,7 +173,7 @@ int tsTickQueue::front(tsTickUnion* pTick)
     {
         if ((rd+tickSize) <= mSize)
         {
-            mTickFactory.unserialize(mpBuf+rd, (tsTick*)pTick);
+            tsTickFactory::unserialize(mpBuf+rd, (tsTick*)pTick);
         }
         else
         {
@@ -182,7 +182,7 @@ int tsTickQueue::front(tsTickUnion* pTick)
             memcpy(wrapBuf, mpBuf + rd, firsPart);
             memcpy(wrapBuf+firsPart, mpBuf, tickSize-firsPart);
 
-            mTickFactory.unserialize(wrapBuf, (tsTick*)pTick);
+            tsTickFactory::unserialize(wrapBuf, (tsTick*)pTick);
         }
     }
 

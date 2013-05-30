@@ -1,13 +1,10 @@
 #include "tsTickSender.h"
-#include "tsTickFinance.h"
 #include <memory>
 #include <iostream>
 #include <stdexcept>
 
 int main(int argc, char** argv)
 {
-    tsTickFactoryFinance factory;
-
     bbU64 sym = 0xDEADDEADUL;
     sym = (sym<<32) | 0xF00DF00DUL;
     tsObjID objID(0xE400002E, sym);
@@ -19,8 +16,7 @@ int main(int argc, char** argv)
 
     try
     {
-        tsTickSender sender(factory,
-                            "tstest",
+        tsTickSender sender("tstest",
                             argc>1 ? argv[1] : "localhost",
                             argc>2 ? atoi(argv[2]) : 2227);
 

@@ -9,7 +9,6 @@
 #include <map>
 #include <list>
 
-class tsTickFactory;
 class tsStore;
 
 class tsNode : public tsTickListener
@@ -20,7 +19,6 @@ class tsNode : public tsTickListener
     std::list<tsTickReceiver*> mPipeTCPConnections;
     tsVecManagedPtr<tsSession> mSessions;
 
-    tsTickFactory&   mFactory;
     tsTracker&       mTracker;
     tsStore&         mStore;
     int              mNextSessionID;
@@ -33,7 +31,7 @@ class tsNode : public tsTickListener
 
 
 public:
-    tsNode(tsTickFactory& factory, tsTracker& tracker, tsStore& store);
+    tsNode(tsTracker& tracker, tsStore& store);
     ~tsNode();
     void* run();
 

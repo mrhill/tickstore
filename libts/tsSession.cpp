@@ -2,8 +2,8 @@
 #include "tsNode.h"
 #include <iostream>
 
-tsSession::tsSession(tsTickFactory& tickFactory, tsNode& node, tsStore& store, int socketFD, int procID)
-  : tsTickReceiver(tickFactory, this, socketFD),
+tsSession::tsSession(tsNode& node, tsStore& store, int socketFD, int procID)
+  : tsTickReceiver(this, socketFD),
     mNode(node),
     mStore(store),
     mSessionID(procID)
@@ -27,11 +27,11 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
     {
     case tsTickType_Diag:
         {
-        mStore.tickFactory().unserializeTail(pRawTick + headSize, &tick);
+        tsTickFactory::unserializeTail(pRawTick + headSize, &tick);
         tsTickDiag& tickDiag = static_cast<tsTickDiag&>(tick);
         tickDiag.setReceiveTime(tsTime::currentTimestamp());
 
-        std::cout << mStore.tickFactory().str(tickDiag)
+        std::cout << tickDiag
                   << strprintf(" latency send %d ms, receive %d ms",
                                (int)(((bbS64)tickDiag.sendTime() - (bbS64)tickDiag.time())/1000000),
                                (int)(((bbS64)tickDiag.receiveTime() - (bbS64)tickDiag.time())/1000000))
@@ -41,10 +41,10 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
 
     case tsTickType_Auth:
         {
-        mStore.tickFactory().unserializeTail(pRawTick + headSize, &tick);
+        tsTickFactory::unserializeTail(pRawTick + headSize, &tick);
         tsTickAuth& tickAuth = static_cast<tsTickAuth&>(tick);
 
-        std::cout << mStore.tickFactory().str(tickAuth) << std::endl;
+        std::cout << tickAuth << std::endl;
 
         bbU64 allowedFeedID = mStore.Authenticate(tickAuth.mUID, tickAuth.mPwdHash);
         if (allowedFeedID == (bbU64)(bbS64)-1)
@@ -61,10 +61,10 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
 
     case tsTickType_Subscribe:
         {
-        mStore.tickFactory().unserializeTail(pRawTick + headSize, &tick);
+        tsTickFactory::unserializeTail(pRawTick + headSize, &tick);
         tsTickSubscribe& tickSubscribe = static_cast<tsTickSubscribe&>(tick);
 
-        std::cout << mStore.tickFactory().str(tickSubscribe) << std::endl;
+        std::cout << tickSubscribe << std::endl;
 
         SubscribeFeed(tickSubscribe.feedID());
         }

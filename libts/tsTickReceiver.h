@@ -23,7 +23,7 @@ protected:
     tsTickQueue     mTickQueue;
 
 public:
-    tsTickReceiver(tsTickFactory& tickFactory, tsTickListener* pListener, int socketFD, const char* pQueueName = NULL);
+    tsTickReceiver(tsTickListener* pListener, int socketFD, const char* pQueueName = NULL);
 
     inline tsSocket& socket() { return mSocket; }
     inline int socketFD() const { mSocket.fd(); }

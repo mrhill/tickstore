@@ -1,5 +1,4 @@
 #include "tsTickSender.h"
-#include "tsTickFinance.h"
 #include "tsStore.h"
 #include <memory>
 #include <iostream>
@@ -7,8 +6,7 @@
 
 int main(int argc, char** argv)
 {
-    tsTickFactoryFinance factory;
-    std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_MySQL, "tickstore_testmysql"));
+    std::auto_ptr<tsStore> pTickerStore(tsStore::Create(tsStoreBackend_MySQL, "tickstore_testmysql"));
 
     std::cout << "current time " << tsTime::current().str() << std::endl;
 
@@ -26,13 +24,13 @@ int main(int argc, char** argv)
         char buf[tsTick::SERIALIZEDMAXSIZE];
 
         std::cout << tick << std::endl;
-        tickSize = factory.serializedSize(tick);
-        factory.serialize(tick, buf);
+        tickSize = tsTickFactory::serializedSize(tick);
+        tsTickFactory::serialize(tick, buf);
         pTickerStore->SaveTick(buf, tickSize);
 
         std::cout << priceTick << std::endl;
-        tickSize = factory.serializedSize(priceTick);
-        factory.serialize(priceTick, buf);
+        tickSize = tsTickFactory::serializedSize(priceTick);
+        tsTickFactory::serialize(priceTick, buf);
         pTickerStore->SaveTick(buf, tickSize);
     }
     catch(std::exception& e)

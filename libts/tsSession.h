@@ -58,7 +58,7 @@ class tsSession : public tsTickReceiver, protected tsTickListener
     virtual void ProcessTick(const char* pRawTick, bbUINT tickSize);
 
 public:
-    tsSession(tsTickFactory& tickFactory, tsNode& node, tsStore& store, int fd, int procID);
+    tsSession(tsNode& node, tsStore& store, int fd, int procID);
     ~tsSession();
 
     void SendTick(const char* pRawTick, bbUINT tickSize);

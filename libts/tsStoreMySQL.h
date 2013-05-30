@@ -57,7 +57,7 @@ class tsStoreMySQL : public tsStore
     void InsertTick(Feed* pFeed, tsTick& tick, const char* pRawTick, bbUINT tickSize);
 
 public:
-    tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName);
+    tsStoreMySQL(const char* pDBName);
     virtual ~tsStoreMySQL();
     virtual void SaveTick(const char* pRawTick, bbUINT tickSize);
     virtual bbU64 Authenticate(bbU64 uid, const bbU8* pPwd);

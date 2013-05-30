@@ -11,7 +11,6 @@
 */
 class tsTickQueue
 {
-    tsTickFactory& mTickFactory;    //!< Factory for tick serialization
     char*   mpBuf;                  //!< Queue circular buffer
     bbUINT  mRd;                    //!< Current read offset
     bbUINT  mWr;                    //!< Current write offset
@@ -29,7 +28,7 @@ public:
         bbUINT sizeSecond;
     };
 
-    tsTickQueue(tsTickFactory& tickFactory, const char* pQueueName = NULL, bool logToFile = false, bbUINT bufsize = 8192);
+    tsTickQueue(const char* pQueueName = NULL, bool logToFile = false, bbUINT bufsize = 8192);
     ~tsTickQueue();
 
     const char* name() const { return mName.c_str(); }

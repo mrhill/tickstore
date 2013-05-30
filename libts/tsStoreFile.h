@@ -16,7 +16,7 @@ class tsStoreFile : public tsStore
     FILE* mhFile;
 
 public:
-    tsStoreFile(tsTickFactory& tickFactory, const char* pFilePath);
+    tsStoreFile(const char* pFilePath);
     virtual ~tsStoreFile();
     virtual void SaveTick(const char* pRawTick, bbUINT tickSize);
 };

@@ -2,6 +2,7 @@
 #define tsSTOREMEMORY_H
 
 #include "tsStore.h"
+#include "tsHeader.h"
 #include <map>
 #include <vector>
 
@@ -15,8 +16,6 @@ class tsStoreMemory : public tsStore
     ObjIDHeaderMap mObjID2Header;
 
 public:
-    tsStoreMemory(tsTickFactory& tickFactory) : tsStore(tickFactory) {}
-
     virtual void SaveTick(const char* pRawTick, bbUINT tickSize);
 };
 

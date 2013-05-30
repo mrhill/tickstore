@@ -1,7 +1,6 @@
 #include "tsStore.h"
 #include "tsThread.h"
 #include "tsTickSender.h"
-#include "tsTickFinance.h"
 #include "tsTracker.h"
 #include "tsNode.h"
 #include <memory>
@@ -22,7 +21,6 @@ struct TestSendThread : public tsThread
     virtual void* run()
     {
         msleep(2000);
-        tsTickFactoryFinance factory;
 
         bbU64 sym = 0xDEADDEADUL;
         sym = (sym<<32) | 0xF00DF00DUL;
@@ -34,7 +32,7 @@ struct TestSendThread : public tsThread
 
         try
         {
-            tsTickSender sender(factory, "tickschleuder", "localhost");
+            tsTickSender sender("tickschleuder", "localhost");
 
             tsTickAuth auth;
             auth.setUID(mTestUID);
@@ -59,14 +57,13 @@ struct TestSendThread : public tsThread
 
 int main(int argc, char** argv)
 {
-    tsTickFactoryFinance factory;
     tsTracker tracker;
 
     try
     {
-        std::auto_ptr<tsStore> pTickerStore(tsStore::Create(factory, tsStoreBackend_MySQL, "ticks"));
+        std::auto_ptr<tsStore> pTickerStore(tsStore::Create(tsStoreBackend_MySQL, "ticks"));
 
-        tsNode node(factory, tracker, *pTickerStore);
+        tsNode node(tracker, *pTickerStore);
 
         TestSendThread sender(pTickerStore.get());
         if (argc > 1 && !strcmp(argv[1], "-t"))

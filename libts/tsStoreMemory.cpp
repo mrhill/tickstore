@@ -23,7 +23,7 @@ void tsStoreMemory::SaveTick(const char* pRawTick, bbUINT /*tickSize*/)
         }
 
         //xxx
-        int tickSize = mTickFactory.serializedSize(tick);
+        int tickSize = tsTickFactory::serializedSize(tick);
         pTable->reserve(tickSize);
         do { pTable->push_back(*pRawTick++); } while (--tickSize);
     }

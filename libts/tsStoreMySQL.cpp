@@ -5,8 +5,8 @@
 #include <string>
 #include <babel/StrBuf.h>
 
-tsStoreMySQL::tsStoreMySQL(tsTickFactory& tickFactory, const char* pDBName)
-  : tsStore(tickFactory), mCon(NULL)
+tsStoreMySQL::tsStoreMySQL(const char* pDBName)
+  : mCon(NULL)
 {
     printf("%s: MySQL client version: %s\n", __FUNCTION__, mysql_get_client_info());
 

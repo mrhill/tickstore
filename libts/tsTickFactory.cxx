@@ -56,3 +56,17 @@
         .add_property("openInt", &tsTickRecap::openInt, &tsTickRecap::setOpenInt)
         .add_property("opt", &tsTickRecap::opt, &tsTickRecap::setOpt)
     ;
+
+    class_<tsTickS32, bases<tsTick> >("tsTickS32")
+        .def(init<const tsObjID&>())
+        .def(init<const tsObjID&,bbS32,bbU32>())
+        .add_property("count", &tsTickS32::count, &tsTickS32::setCount)
+        .add_property("opt", &tsTickS32::opt, &tsTickS32::setOpt)
+    ;
+
+    class_<tsTickF64, bases<tsTick> >("tsTickF64")
+        .def(init<const tsObjID&>())
+        .def(init<const tsObjID&,double,bbU32>())
+        .add_property("value", &tsTickF64::value, &tsTickF64::setValue)
+        .add_property("opt", &tsTickF64::opt, &tsTickF64::setOpt)
+    ;

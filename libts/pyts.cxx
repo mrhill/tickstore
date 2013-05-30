@@ -88,7 +88,7 @@ BOOST_PYTHON_MODULE(pyts)
         .add_property("storeTime", &tsTickDiag::storeTime, &tsTickDiag::setStoreTime)
     ;
 
-    #include "tsTickFinance.cxx"
+    #include "tsTickFactory.cxx"
 
     class_<tsTickSenderFinance>("tsTickSender")
         .def(init<const char*, int>())
