@@ -4,12 +4,6 @@
 #include <stdexcept>
 #include <sys/timeb.h>
 
-void tsTickSender::tierDownConnection()
-{
-    printf("%s: tiering down connection\n", __FUNCTION__);
-    mSocket.close();
-}
-
 void* tsTickSender::run()
 {
     int retryWait = 500;
@@ -59,7 +53,8 @@ void* tsTickSender::run()
                         mTickQueue.pop();
                     } catch(tsSocketException& e) {
                         std::cout << e.what();
-                        tierDownConnection();
+                        printf("%s: tiering down connection\n", __FUNCTION__);
+                        mSocket.close();
                         mTickQueueSema.post();
                     }
                 }

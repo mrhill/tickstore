@@ -1,4 +1,5 @@
 #include "tsStore.h"
+#include "tsTickClient.h"
 #include "tsTickReceiver.h"
 #include "tsTickSender.h"
 #include <memory>
@@ -7,19 +8,11 @@
 
 int main(int argc, char** argv)
 {
-    try
-    {
-        std::auto_ptr<tsStore> pTickerStore(tsStore::Create(tsStoreBackend_MySQL, "ticks"));
+    std::auto_ptr<tsStore> pTickerStore(tsStore::Create(tsStoreBackend_MySQL, "ticks"));
+    tsTickClient node("tickstore", "localhost");
 
-        tsTickSender sender("tickstore", "localhost");
-
-        tsTickSubscribe subcribe;
-        sender << subcribe;
-    }
-    catch(std::exception& e)
-    {
-        std::cout << e.what();
-    }
+    tsTickSubscribe subcribe;
+    //sender << subcribe;
 
     return 0;
 }

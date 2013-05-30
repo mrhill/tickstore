@@ -22,7 +22,6 @@ class tsTickSender : protected tsThread
     std::string mHostName;
 
     virtual void* run();
-    void tierDownConnection();
     void sendUnprotected(tsTick& tick);
     void sendDiagTick();
 
