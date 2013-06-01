@@ -1,5 +1,8 @@
 #include "tsSocket.h"
 
+#include <unistd.h>
+#include <fcntl.h>
+
 #ifndef _WIN32
 #include <errno.h>
 #include <sys/types.h>
@@ -431,5 +434,17 @@ int tsSocketSet::select(int timeoutUs)
         throw tsSocketException(strprintf("%s: error %d on select", __FUNCTION__, errno));
 
     return retval;
+}
+
+int tsSocket::setFDNonBlocking(int fd)
+{
+    int flags = ::fcntl(fd, F_GETFL);
+    flags |= O_NONBLOCK;
+    flags = ::fcntl(fd, F_SETFL, flags);
+
+    if (flags < 0)
+        throw tsSocketException(strprintf("%s: error %d on fcntl", __FUNCTION__, errno));
+
+    return flags;
 }
 

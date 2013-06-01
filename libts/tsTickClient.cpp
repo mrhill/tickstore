@@ -4,7 +4,8 @@
 tsTickClient::tsTickClient(const char* pQueueName, const char* pServerAddr, int port)
   : mSocket(tsSocketType_TCP),
     mServerAddr(pServerAddr),
-    mServerPort(port)
+    mServerPort(port),
+    mTickQueue(pQueueName)
 {
     tsThread::start();
 }

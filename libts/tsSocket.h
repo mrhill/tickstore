@@ -97,6 +97,9 @@ public:
         int port = peerAddress(s);
         return strprintf("%s:%d", s.c_str(), port);
     }
+
+    static int setFDNonBlocking(int fd);
+    inline int setNonBlocking() { return setFDNonBlocking(mSocket); }
 };
 
 class tsSocketSet
