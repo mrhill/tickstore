@@ -2,9 +2,10 @@
 #include <iostream>
 
 tsTickClient::tsTickClient(const char* pQueueName, const char* pServerAddr, int port)
-  : mSocket(tsSocketType_TCP),
+  : tsTickReceiver(this, -1),
     mServerAddr(pServerAddr),
     mServerPort(port),
+    mTickCount(0),
     mTickQueue(pQueueName)
 {
     tsThread::start();
@@ -18,16 +19,21 @@ tsTickClient::~tsTickClient()
 
 void* tsTickClient::run()
 {
+    int retry = 0;
     int retryWait = 500;
+    tsSocketSet socketSet;
+
     do
     {
         switch (mSocket.state())
         {
         case tsSocketState_Unconnected:
             try {
-                printf("%s: connecting %s:%d...\n", __FUNCTION__, mServerAddr.c_str(), mServerPort);
+                printf("%s: connecting %s:%d, retry %d...\n", __FUNCTION__, mServerAddr.c_str(), mServerPort, retry++);
                 mSocket.connect(mServerAddr.c_str(), mServerPort);
+                retry = 0;
                 retryWait = 500;
+                printf("%s: connected to %s:%d...\n", __FUNCTION__, mServerAddr.c_str(), mServerPort);
             } catch(tsSocketException& e) {
                 printf("%s", e.what());
 
@@ -38,28 +44,24 @@ void* tsTickClient::run()
             break;
 
         case tsSocketState_Connected:
-            if (mTickQueueSema.wait(500))
+            socketSet.addRdFD(mSocket.fd());
+
+            if (socketSet.select())
             {
-                char* pTickSerialized;
-                int tickSize = mTickQueue.frontRaw(&pTickSerialized);
-
-                if (tickSize > 0)
+                try
                 {
-                    if (bbLD16LE(pTickSerialized) == tsTickType_Diag)
+                    if (socketSet.testRdFD(mSocket.fd()))
                     {
-                        bbU64 t = tsTime::currentNs();
-                        bbST64LE(pTickSerialized+tsTick::SERIALIZEDHEADSIZE, t);
+                        if (!receiveTicks(0))
+                        {
+                            printf("%s: closing TCP connection\n", __FUNCTION__);
+                            mSocket.close();
+                        }
                     }
-
-                    try {
-                        mSocket.send(pTickSerialized, tickSize);
-                        mTickQueue.pop();
-                    } catch(tsSocketException& e) {
-                        std::cout << e.what();
-                        printf("%s: tiering down connection\n", __FUNCTION__);
-                        mSocket.close();
-                        mTickQueueSema.post();
-                    }
+                }
+                catch(tsSocketException& e)
+                {
+                    printf("%s: %s\n", __FUNCTION__, e.what());
                 }
             }
             break;
@@ -69,8 +71,52 @@ void* tsTickClient::run()
             break;
         }
 
-    } while (!testCancel() || (!mTickQueue.empty() && mSocket.state()==tsSocketState_Connected));
+    } while (!testCancel());
 
     return NULL;
+}
+
+void tsTickClient::send(tsTick& tick)
+{
+    tick.setCount(mTickCount);
+
+    bbUINT const tickSize = tsTickFactory::serializedSize(tick);
+    char buf[tsTick::SERIALIZEDMAXSIZE];
+    tsTickFactory::serialize(tick, buf);
+
+    int retry = 0;
+    int timeout = 100;
+    for(;;)
+    {
+        if (mSocket.state() != tsSocketState_Connected)
+        {
+            printf("%s: retry %d, not connected\n", __FUNCTION__, retry);
+        }
+        else
+        {
+            try
+            {
+                if (mSocket.send(buf, tickSize, 0) > 0)
+                    break;
+
+                printf("%s: retry %d, cannot send tick\n", __FUNCTION__, retry);
+            }
+            catch(tsSocketException& e)
+            {
+                printf("%s: retry %d, %s\n", __FUNCTION__, retry, e.what());
+            }
+        }
+        tsThread::msleep(timeout);
+        if (timeout < 3200)
+            timeout <<= 1;
+        retry++;
+    }
+
+    mTickCount++;
+}
+
+void tsTickClient::ProcessTick(const char* pRawTick, bbUINT tickSize)
+{
+    printf("%s 0x%X\n", __FUNCTION__, tickSize);
 }
 
