@@ -2,10 +2,7 @@
 #define tsTICKCLIENT_H
 
 #include "tsTick.h"
-#include "tsTickQueue.h"
 #include "tsThread.h"
-#include "tsSocket.h"
-#include "tsMutex.h"
 #include "tsTickReceiver.h"
 
 class tsTickClient : public tsThread, public tsTickListener, public tsTickReceiver
@@ -13,8 +10,6 @@ class tsTickClient : public tsThread, public tsTickListener, public tsTickReceiv
     int         mServerPort;
     std::string mServerAddr;
     bbU32       mTickCount;
-    tsMutex     mTickQueueWriteMutex; //!< Protect write access to mTickQueue
-    tsTickQueue mTickQueue;
 
     virtual void* run();
 public:

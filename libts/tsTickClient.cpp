@@ -1,12 +1,10 @@
 #include "tsTickClient.h"
-#include <iostream>
 
 tsTickClient::tsTickClient(const char* pQueueName, const char* pServerAddr, int port)
   : tsTickReceiver(this, -1),
     mServerAddr(pServerAddr),
     mServerPort(port),
-    mTickCount(0),
-    mTickQueue(pQueueName)
+    mTickCount(0)
 {
     tsThread::start();
 }
