@@ -12,13 +12,6 @@ enum tsSocketType
     tsSocketType_UDP
 };
 
-enum tsSocketMode
-{
-    tsSocketMode_Read = 1,
-    tsSocketMode_Write = 2,
-    tsSocketMode_ReadWrite = 3
-};
-
 enum tsSocketState
 {
     tsSocketState_Unconnected,
@@ -50,6 +43,7 @@ class tsSocket
     int              mSocket;   //!< Socket FD
     bbU8             mType;     //!< tsSocketType
     bbU8             mState;    //!< tsSocketState
+    bbU8             mNonBlocking;
     struct addrinfo* mpAddrInfo;
     struct addrinfo* mpAddrBound;
 
@@ -63,7 +57,11 @@ public:
     tsSocketState state() const { return (tsSocketState)mState; }
     inline int fd() const { return mSocket; }
     void close();
-    void connect(const char* pHostName, bbU16 port, tsSocketMode openMode = tsSocketMode_ReadWrite);
+
+    void prepare(const char* pHostName, bbU16 port);
+    void connect();
+
+    void connect(const char* pHostName, bbU16 port);
 
     /** Bind socket to local host.
         @param pHostName hostname or NULL local loopback
@@ -99,7 +97,7 @@ public:
     }
 
     static int setFDNonBlocking(int fd);
-    inline int setNonBlocking() { return setFDNonBlocking(mSocket); }
+    inline int setNonBlocking() { mNonBlocking=1; return setFDNonBlocking(mSocket); }
 };
 
 class tsSocketSet

@@ -86,6 +86,7 @@ tsSocket::tsSocket(tsSocketType type) :
     mSocket(-1),
     mType((bbU8)type),
     mState((bbU8)tsSocketState_Unconnected),
+    mNonBlocking(0),
     mpAddrInfo(NULL),
     mpAddrBound(NULL)
 {
@@ -168,7 +169,7 @@ void tsSocket::getAddressInfo(const char* pHostName, bbU16 port)
 */
 }
 
-void tsSocket::connect(const char* pHostName, bbU16 port, tsSocketMode openMode)
+void tsSocket::prepare(const char* pHostName, bbU16 port)
 {
     close();
 
@@ -176,18 +177,30 @@ void tsSocket::connect(const char* pHostName, bbU16 port, tsSocketMode openMode)
     getAddressInfo(pHostName, port);
 
     mState = (bbU8)tsSocketState_Connecting;
-    mSocket = socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
+    mSocket = ::socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
     if (mSocket == -1) {
         close();
         throw tsSocketException(strprintf("%s: Error %d creating socket", __FUNCTION__, errno));
     }
+}
+
+void tsSocket::connect()
+{
+    if (mState != tsSocketState_Connecting || !mpAddrInfo)
+        throw tsSocketException(strprintf("%s: bad state", __FUNCTION__, errno));
 
     int status = ::connect(mSocket, mpAddrInfo->ai_addr, mpAddrInfo->ai_addrlen);
-    if (status == -1) {
+    if (status == -1 && errno != EINPROGRESS) {
         close();
         throw tsSocketException(strprintf("%s: Error %d connecting socket", __FUNCTION__, errno));
     }
     mState = (bbU8)tsSocketState_Connected;
+}
+
+void tsSocket::connect(const char* pHostName, bbU16 port)
+{
+    prepare(pHostName, port);
+    connect();
 }
 
 void tsSocket::bind(const char* pHostName, bbU16 port)
