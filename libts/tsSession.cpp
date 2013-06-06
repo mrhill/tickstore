@@ -86,12 +86,10 @@ void tsSession::SendTick(const char* pRawTick, bbUINT tickSize)
     {
         if (!mSocket.send(pRawTick, tickSize, 0))
             printf("%s %d: cannot send, discarding %d bytes\n", __FUNCTION__, mSessionID, tickSize);
-        else
-            printf("%s %d: sent %d bytes\n", __FUNCTION__, mSessionID, tickSize);
     }
     catch(tsSocketException& e)
     {
-        printf("%s: %s\n", __FUNCTION__, e.what());
+        printf("%s %d: discarding %d bytes, %s\n", __FUNCTION__, mSessionID, tickSize, e.what());
     }
 }
 

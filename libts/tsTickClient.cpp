@@ -115,6 +115,5 @@ void tsTickClient::send(tsTick& tick)
 
 void tsTickClient::ProcessTick(const char* pRawTick, bbUINT tickSize)
 {
-    printf("%s 0x%X\n", __FUNCTION__, tickSize);
 }
 
