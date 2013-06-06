@@ -68,6 +68,8 @@ void* tsTickSender::run()
 
     } while (!testCancel() || (!mTickQueue.empty() && mSocket.state()==tsSocketState_Connected));
 
+    printf("tsTickSender::run: shutting down\n");
+
     return NULL;
 }
 
