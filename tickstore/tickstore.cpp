@@ -1,28 +1,32 @@
-#include "tsSocket.h"
 #include "tsStore.h"
-#include "tsThread.h"
 #include "tsTickClient.h"
-#include "tsTickReceiver.h"
-#include "tsTickSender.h"
 #include <memory>
 #include <iostream>
 #include <stdexcept>
 
-struct TickClient : tsTickClient
+class TickClient : public tsTickClient
 {
-    TickClient(const char* pServerAddr = "localhost", int port = 2227) : tsTickClient("tickstore", pServerAddr, port) {}
+    std::auto_ptr<tsStore> mpStore;
+
     virtual void ProcessTick(const char* pRawTick, bbUINT tickSize);
+
+public:
+    TickClient(const char* pServerAddr = "localhost", int port = 2227);
 };
+
+TickClient::TickClient(const char* pServerAddr, int port)
+  : tsTickClient("tickstore", pServerAddr, port)
+{
+    mpStore = std::auto_ptr<tsStore>(tsStore::Create(tsStoreBackend_MySQL, "ticks"));
+}
 
 void TickClient::ProcessTick(const char* pRawTick, bbUINT tickSize)
 {
-    printf("%s 0x%X\n", __FUNCTION__, tickSize);
+    mpStore->SaveTick(pRawTick, tickSize);
 }
 
 int main(int argc, char** argv)
 {
-    std::auto_ptr<tsStore> pTickerStore(tsStore::Create(tsStoreBackend_MySQL, "ticks"));
-
     TickClient node;
 
     tsTickAuth auth;
