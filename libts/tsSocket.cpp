@@ -194,6 +194,7 @@ void tsSocket::connect()
         close();
         throw tsSocketException(strprintf("%s: Error %d connecting socket", __FUNCTION__, errno));
     }
+
     mState = (bbU8)tsSocketState_Connected;
 }
 
@@ -218,6 +219,9 @@ void tsSocket::bind(const char* pHostName, bbU16 port)
         mSocket = ::socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
         if (mSocket == -1)
             continue;
+
+        int yes = 1;
+        ::setsockopt(mSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&yes, sizeof(yes));
 
         if (::bind(mSocket, p->ai_addr, p->ai_addrlen) == -1)
         {
@@ -315,7 +319,7 @@ int tsSocket::send(const char* pBuf, bbU32 len, int timeoutMs)
     int size = len;
     while ((bbS32)len > 0)
     {
-        int status = ::send(mSocket, (const char*)pBuf, len, timeoutMs ? 0 : MSG_DONTWAIT);
+        int status = ::send(mSocket, (const char*)pBuf, len, (timeoutMs ? 0 : MSG_DONTWAIT) | MSG_NOSIGNAL);
         if (status == -1)
         {
             if (errno == EWOULDBLOCK)
@@ -370,7 +374,7 @@ void tsSocket::attachFD(int socket)
 {
     close();
     mSocket = socket;
-    mState = (bbU8)tsSocketState_Connected;
+    mState = (bbU8)(socket==-1 ? tsSocketState_Unconnected : tsSocketState_Connected);
 }
 
 int tsSocket::detachFD()
