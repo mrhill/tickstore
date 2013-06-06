@@ -29,16 +29,23 @@ int main(int argc, char** argv)
         subscr.setFeedID(0);
         sender << subscr;
 
-        for (int i=0; i<1000; i++)
+        for(int loop=0;; loop++)
         {
-            priceTick.setPrice(i);
-            sender << tick << priceTick;
+            printf("%s: loop %d\n", __FUNCTION__, loop);
+            for (int i=0; i<1000; i++)
+            {
+                priceTick.setPrice(i);
+                sender << tick << priceTick;
+            }
+            tsThread::msleep(2000);
         }
     }
     catch(std::exception& e)
     {
         std::cout << e.what();
     }
+
+    printf("%s: exit\n", __FUNCTION__);
 
     return 0;
 }
