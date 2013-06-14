@@ -177,93 +177,61 @@ void tsStoreMySQL::SaveTick(const char* pRawTick, bbUINT tickSize)
     InsertTick(pFeed, tick, pRawTick, tickSize);
 }
 
-
-tsStoreMySQL::Query::Query(MYSQL* pCon, const char* sql) : mCon(pCon), mResult(NULL)
-{
-    if (sql)
-        Exec(sql);
-}
-
-void tsStoreMySQL::Query::Clear()
-{
-    if (mResult)
-        mysql_free_result(mResult);
-    mResult = NULL;
-}
-
-void tsStoreMySQL::Query::Exec(const char* sql)
-{
-    Clear();
-
-    if (mysql_query(mCon, sql))
-        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
-
-    mResult = mysql_store_result(mCon);
-    if (!mResult)
-        throw tsStoreException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
-}
-
-MYSQL_ROW tsStoreMySQL::Query::FetchRow()
-{
-    MYSQL_ROW row = mysql_fetch_row(mResult);
-    mLengths = mysql_fetch_lengths(mResult);
-    return row;
-}
-
-MYSQL_ROW tsStoreMySQL::Query::ExecAndFetchRow(const char* sql)
-{
-    Exec(sql);
-    return FetchRow();
-}
-
 bbU64 tsStoreMySQL::Authenticate(bbU64 uid, const bbU8* pPwd)
 {
-    tsMutexLocker lock(mMutex);
-
-    bbStrBuf sql;
-    sql.Printf("SELECT pwd,salt FROM user WHERE id=%"bbI64"u", uid);
-    Query q(mCon, sql.GetPtr());
-
-    // - Check if UID exists
-    MYSQL_ROW row = q.FetchRow();
-    if (!row)
-    {
-        printf("%s: unknown UID 0x%"bbI64"X\n", __FUNCTION__, uid);
-        return 0;
-    }
-
-    if (!row[0] || !row[1] || q.GetFieldLen(0)!=32 || q.GetFieldLen(1)!=32)
-        throw tsStoreException(strprintf("%s: unexpected user query result\n", __FUNCTION__));
-
-    // - sha256 the salted input, and compare with stored result
     try
     {
-        tsHash hash(MHASH_SHA256);
-        hash.update(row[1], 32); // salt
-        hash.update(pPwd, 32); // input password
+        tsMutexLocker lock(mMutex);
 
-        if (memcmp(hash.digest(), row[0], 32))
+        bbStrBuf sql;
+        sql.Printf("SELECT pwd,salt FROM user WHERE id=%"bbI64"u", uid);
+        tsMySQLQuery q(mCon, sql.GetPtr());
+
+        // - Check if UID exists
+        MYSQL_ROW row = q.FetchRow();
+        if (!row)
         {
-            printf("%s: UID 0x%"bbI64"X, password mismatch\n", __FUNCTION__, uid);
+            printf("%s: unknown UID 0x%"bbI64"X\n", __FUNCTION__, uid);
             return 0;
         }
+
+        if (!row[0] || !row[1] || q.GetFieldLen(0)!=32 || q.GetFieldLen(1)!=32)
+            throw tsStoreException(strprintf("%s: unexpected user query result\n", __FUNCTION__));
+
+        // - sha256 the salted input, and compare with stored result
+        try
+        {
+            tsHash hash(MHASH_SHA256);
+            hash.update(row[1], 32); // salt
+            hash.update(pPwd, 32); // input password
+
+            if (memcmp(hash.digest(), row[0], 32))
+            {
+                printf("%s: UID 0x%"bbI64"X, password mismatch\n", __FUNCTION__, uid);
+                return 0;
+            }
+        }
+        catch(const tsHashException& e)
+        {
+            throw tsStoreException(e.what());
+        }
+
+        sql.Printf("SELECT id FROM feed WHERE uid=%"bbI64"u", uid);
+        row = q.ExecAndFetchRow(sql.GetPtr());
+        if (!row)
+        {
+            printf("%s: No feeds for UID 0x%"bbI64"X\n", __FUNCTION__, uid);
+            return 0;
+        }
+
+        bbU64 feedID = strtoull(row[0], NULL, 10); // _strtoui64() in MSVC
+        printf("%s: Allowing feed 0x%"bbI64"X for UID 0x%"bbI64"X\n", __FUNCTION__, feedID, uid);
+        return feedID;
     }
-    catch(const tsHashException& e)
+    catch(const tsMySQLException& e)
     {
         throw tsStoreException(e.what());
     }
-
-    sql.Printf("SELECT id FROM feed WHERE uid=%"bbI64"u", uid);
-    row = q.ExecAndFetchRow(sql.GetPtr());
-    if (!row)
-    {
-        printf("%s: No feeds for UID 0x%"bbI64"X\n", __FUNCTION__, uid);
-        return 0;
-    }
-
-    bbU64 feedID = strtoull(row[0], NULL, 10); // _strtoui64() in MSVC
-    printf("%s: Allowing feed 0x%"bbI64"X for UID 0x%"bbI64"X\n", __FUNCTION__, feedID, uid);
-    return feedID;
 }
 
 bbU64 tsStoreMySQL::CreateUser(std::string name, const bbU8* pPwd)

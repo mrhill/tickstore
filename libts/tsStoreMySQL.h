@@ -3,29 +3,13 @@
 
 #include "tsStore.h"
 #include "tsMutex.h"
+#include "tsMySQL.h"
 #include <map>
-#include <my_global.h>
-#include <mysql.h>
 
 class tsStoreMySQL : public tsStore
 {
     MYSQL* mCon;
     tsMutex mMutex;
-
-    struct Query
-    {
-        MYSQL* mCon;
-        MYSQL_RES* mResult;
-        unsigned long* mLengths;
-
-        Query(MYSQL* pCon, const char* sql = NULL);
-        ~Query() { Clear(); }
-        void Exec(const char* sql);
-        void Clear();
-        MYSQL_ROW FetchRow();
-        MYSQL_ROW ExecAndFetchRow(const char* sql);
-        inline unsigned long GetFieldLen(bbUINT i) const { return mLengths[i]; }
-    };
 
     struct InsertParam
     {
