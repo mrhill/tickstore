@@ -22,6 +22,11 @@ TickClient::TickClient(const char* pServerAddr, int port)
 
 void TickClient::ProcessTick(const char* pRawTick, bbUINT tickSize)
 {
+    tsTickUnion tickUnion;
+    tsTick& tick = tickUnion;
+    tsTickFactory::unserialize(pRawTick, &tick);
+    std::cout << tick;
+
     mpStore->SaveTick(pRawTick, tickSize);
 }
 

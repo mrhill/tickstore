@@ -1,11 +1,13 @@
-#include "tsStore.h"
+#include <memory>
+#include <iostream>
+#include <stdexcept>
+#include "tsdef.h"
 #include "tsThread.h"
 #include "tsTickSender.h"
 #include "tsTracker.h"
 #include "tsNode.h"
-#include <memory>
-#include <iostream>
-#include <stdexcept>
+#include "tsAuth.h"
+#include "tsStore.h"
 
 struct TestSendThread : public tsThread
 {
@@ -15,7 +17,7 @@ struct TestSendThread : public tsThread
     {
         bbU8 pwdHash[32];
         memset(pwdHash, 0, sizeof(pwdHash));
-        mTestUID = pStore->CreateUser("testsender", pwdHash);
+        mTestUID = tsAuth::instance().CreateUser("testsender", pwdHash);
     }
 
     virtual void* run()
@@ -59,11 +61,13 @@ int main(int argc, char** argv)
 {
     tsTracker tracker;
 
+    tsAuthMySQL auth("ticks");
+
     try
     {
         std::auto_ptr<tsStore> pTickerStore(tsStore::Create(tsStoreBackend_MySQL, "ticks"));
 
-        tsNode node(tracker, *pTickerStore);
+        tsNode node(tracker);
 
         TestSendThread sender(pTickerStore.get());
         if (argc > 1 && !strcmp(argv[1], "-t"))

@@ -18,14 +18,3 @@ tsStore* tsStore::Create(tsStoreBackend type, const char* pName)
     return pStore;
 }
 
-bbU64 tsStore::Authenticate(bbU64 uid, const bbU8* pPwd)
-{
-    return (bbU64)(bbS64)-1; // allow all feeds
-}
-
-bbU64 tsStore::CreateUser(std::string name, const bbU8* pPwd)
-{
-    throw tsStoreException("Not implemented");
-}
-
-

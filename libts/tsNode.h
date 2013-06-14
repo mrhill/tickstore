@@ -9,8 +9,6 @@
 #include <map>
 #include <list>
 
-class tsStore;
-
 class tsNode : public tsTickListener
 {
     tsSocket         mClientListen;
@@ -20,7 +18,6 @@ class tsNode : public tsTickListener
     tsVecManagedPtr<tsSession> mSessions;
 
     tsTracker&       mTracker;
-    tsStore&         mStore;
     int              mNextSessionID;
 
     static const unsigned MaxClientConnections = tsSocketSet::MAXSETSIZE/2;
@@ -32,7 +29,7 @@ class tsNode : public tsTickListener
 
 
 public:
-    tsNode(tsTracker& tracker, tsStore& store);
+    tsNode(tsTracker& tracker);
     ~tsNode();
     void* run();
 

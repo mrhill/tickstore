@@ -8,7 +8,7 @@
 
 class tsStoreMySQL : public tsStore
 {
-    MYSQL* mCon;
+    tsMySQLCon mCon;
     tsMutex mMutex;
 
     struct InsertParam
@@ -35,7 +35,6 @@ class tsStoreMySQL : public tsStore
     FeedMap mFeedMap;
     InsertParam mInsertParam;
 
-    void CreateUserTable();
     void CreateFeedTable(bbU64 feedID);
     Feed* GetFeed(bbU64 feedID);
     void InsertTick(Feed* pFeed, tsTick& tick, const char* pRawTick, bbUINT tickSize);
@@ -44,8 +43,6 @@ public:
     tsStoreMySQL(const char* pDBName);
     virtual ~tsStoreMySQL();
     virtual void SaveTick(const char* pRawTick, bbUINT tickSize);
-    virtual bbU64 Authenticate(bbU64 uid, const bbU8* pPwd);
-    virtual bbU64 CreateUser(std::string name, const bbU8* pPwd);
 };
 
 #endif

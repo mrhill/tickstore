@@ -1,4 +1,4 @@
-include_directories (../../babel/include ../libts ${MHASH_INCLUDE_PATH})
+include_directories (../../babel/include ../libts ${MHASH_INCLUDE_PATH} ${MYSQL_INCLUDE_DIR})
 link_directories (../../babel ../libts)
 find_package (Threads)
 

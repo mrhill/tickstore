@@ -2,7 +2,6 @@
 #define tsSession_H
 
 #include "tsdef.h"
-#include "tsStore.h"
 #include "tsTickReceiver.h"
 #include <set>
 
@@ -11,7 +10,6 @@ class tsNode;
 class tsSession : public tsTickReceiver, protected tsTickListener
 {
     tsNode&         mNode;
-    tsStore&        mStore;
 
     struct FeedFilter
     {
@@ -58,7 +56,7 @@ class tsSession : public tsTickReceiver, protected tsTickListener
     virtual void ProcessTick(const char* pRawTick, bbUINT tickSize);
 
 public:
-    tsSession(tsNode& node, tsStore& store, int fd, int procID);
+    tsSession(tsNode& node, int fd, int procID);
     ~tsSession();
 
     void SendTick(const char* pRawTick, bbUINT tickSize);

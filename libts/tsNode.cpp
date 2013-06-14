@@ -3,9 +3,8 @@
 #include <iostream>
 #include <algorithm>
 
-tsNode::tsNode(tsTracker& tracker, tsStore& store)
+tsNode::tsNode(tsTracker& tracker)
   : mTracker(tracker),
-    mStore(store),
     mClientListen(tsSocketType_TCP),
     mPipeListen(tsSocketType_TCP),
     mNextSessionID(0)
@@ -82,7 +81,7 @@ void* tsNode::run()
                 {
                     int newSocketOut = mClientListen.accept();
                     printf("%s: new client connection on %s with fd %d\n", __FUNCTION__, mClientListen.nameinfo().c_str(), newSocketOut);
-                    tsSession* pSession = new tsSession(*this, mStore, newSocketOut, mNextSessionID++);
+                    tsSession* pSession = new tsSession(*this, newSocketOut, mNextSessionID++);
                     mSessions.push_back(pSession);
                 }
             }

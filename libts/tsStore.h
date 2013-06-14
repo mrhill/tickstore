@@ -27,20 +27,6 @@ public:
     virtual ~tsStore() {}
 
     virtual void SaveTick(const char* pRawTick, bbUINT tickSize) = 0;
-
-    /** Authenticate user.
-        @param uid User ID
-        @param pPwd Password hash, exactly 32 bytes long
-        @return Feed ID (incoming feed) this user is allowed for, 0 for failure, -1 for all allowed
-    */
-    virtual bbU64 Authenticate(bbU64 uid, const bbU8* pPwd);
-
-    /** Create a new user.
-        @param name User name
-        @param pPwd Password hash, 32 bytes
-        @return User ID
-    */
-    virtual bbU64 CreateUser(std::string name, const bbU8* pPwd);
 };
 
 #endif

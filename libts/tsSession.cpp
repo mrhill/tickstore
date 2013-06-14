@@ -1,11 +1,11 @@
+#include <iostream>
 #include "tsSession.h"
 #include "tsNode.h"
-#include <iostream>
+#include "tsAuth.h"
 
-tsSession::tsSession(tsNode& node, tsStore& store, int socketFD, int procID)
+tsSession::tsSession(tsNode& node, int socketFD, int procID)
   : tsTickReceiver(this, socketFD),
     mNode(node),
-    mStore(store),
     mSessionID(procID)
 {
     mInFilter.AddFeed(400);
@@ -46,7 +46,7 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
 
         std::cout << tickAuth << std::endl;
 
-        bbU64 allowedFeedID = mStore.Authenticate(tickAuth.mUID, tickAuth.mPwdHash);
+        bbU64 allowedFeedID = tsAuth::instance().Authenticate(tickAuth.mUID, tickAuth.mPwdHash);
         if (allowedFeedID == (bbU64)(bbS64)-1)
         {
             mInFilter.mAllowAll = 1;
