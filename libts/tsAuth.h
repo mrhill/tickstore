@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <stdexcept>
+#include "json.h"
 
 enum tsUserPerm
 {
@@ -69,7 +70,7 @@ class tsAuthMySQL : public tsAuth
     void CreateUserTable();
 
 public:
-    tsAuthMySQL(const char* pDBName);
+    tsAuthMySQL(const json_value& authConfig);
     virtual ~tsAuthMySQL();
 
     virtual int Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user);

@@ -3,13 +3,17 @@
 
 tsMySQLCon::tsMySQLCon(const char* dbname, const char* host, bbU16 port, const char* user, const char* pass)
 {
+    if (!dbname || std::string(dbname).empty())
+        throw tsMySQLException(strprintf("%s: invalid DB name\n", __FUNCTION__));
+
     printf("%s: MySQL client version: %s\n", __FUNCTION__, mysql_get_client_info());
 
     mCon = mysql_init(NULL);
     if (!mCon)
         throw tsMySQLException(strprintf("%s: Error on mysql_init()\n", __FUNCTION__));
 
-    if (!mysql_real_connect(mCon, host ? host: "localhost", user, pass, NULL, port, NULL, 0))
+    std::string strHost = host ? host : "";
+    if (!mysql_real_connect(mCon, strHost.empty() ? "localhost" : host, user, pass, NULL, port, NULL, 0))
         throw tsMySQLException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
 
     printf("%s: MySQL host: %s\n", __FUNCTION__, mysql_get_host_info(mCon));

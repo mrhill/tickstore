@@ -28,8 +28,8 @@ bbU64 tsAuth::CreateUser(std::string name, const bbU8* pPwd, bbU32 perm)
     throw tsAuthException("Not implemented");
 }
 
-tsAuthMySQL::tsAuthMySQL(const char* pDBName)
-  : mCon(pDBName)
+tsAuthMySQL::tsAuthMySQL(const json_value& cfg)
+  : mCon(cfg["dbname"], cfg["host"], (int)cfg["port"], cfg["user"], cfg["pass"])
 {
     CreateUserTable();
 }
@@ -83,7 +83,7 @@ int tsAuthMySQL::Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user)
         return 0;
     }
 
-    if (!row[0] || !row[1] || q.GetFieldLen(0)!=32 || q.GetFieldLen(1)!=32)
+    if (!row[0] || !row[1] || !row[2] || q.GetFieldLen(0)!=32 || q.GetFieldLen(1)!=32)
         throw tsAuthException(strprintf("%s: unexpected user query result\n", __FUNCTION__));
 
     // - sha256 the salted input, and compare with stored result

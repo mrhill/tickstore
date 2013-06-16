@@ -10,7 +10,7 @@ include_directories (
 file(GLOB HEADERS "../../babel/include/*.h")
 file(GLOB SRCS "*.cpp")
 
-add_library (ts ${SRCS} ${HEADERS})
+add_library (ts ${SRCS} json.c ${HEADERS})
 
 IF( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" )
   SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-fPIC")
