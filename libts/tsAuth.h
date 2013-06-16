@@ -4,7 +4,32 @@
 #include "tsMutex.h"
 #include "tsMySQL.h"
 #include <map>
+#include <vector>
 #include <stdexcept>
+
+enum tsUserPerm
+{
+    tsUserPerm_TickToAll = 0x1,
+    tsUserPermCount
+};
+
+class tsUser
+{
+protected:
+    bbU64 mUID;
+    bbU32 mPerm;
+    std::vector<bbU64> mFeeds;
+
+    friend class tsAuth;
+    friend class tsAuthMySQL;
+
+public:
+    tsUser(bbU64 uid = 0, bbU32 perm = 0) : mUID(uid), mPerm(perm) {}
+    void Clear();
+
+    inline bbU32 perm() const { return mPerm; }
+    inline const std::vector<bbU64>& feeds() const { return mFeeds; }
+};
 
 class tsAuthException : public std::runtime_error
 {
@@ -19,8 +44,8 @@ public:
     tsAuth();
     static inline tsAuth& instance() { return *sInstance; }
     virtual ~tsAuth() {}
-    virtual bbU64 Authenticate(bbU64 uid, const bbU8* pPwd);
-    virtual bbU64 CreateUser(std::string name, const bbU8* pPwd);
+    virtual int Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user);
+    virtual bbU64 CreateUser(std::string name, const bbU8* pPwd, bbU32 perm);
 };
 
 class tsAuthMySQL : public tsAuth
@@ -47,8 +72,8 @@ public:
     tsAuthMySQL(const char* pDBName);
     virtual ~tsAuthMySQL();
 
-    virtual bbU64 Authenticate(bbU64 uid, const bbU8* pPwd);
-    virtual bbU64 CreateUser(std::string name, const bbU8* pPwd);
+    virtual int Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user);
+    virtual bbU64 CreateUser(std::string name, const bbU8* pPwd, bbU32 perm);
 };
 
 #endif

@@ -3,13 +3,15 @@
 
 #include "tsdef.h"
 #include "tsTickReceiver.h"
+#include "tsAuth.h"
 #include <set>
 
 class tsNode;
 
 class tsSession : public tsTickReceiver, protected tsTickListener
 {
-    tsNode&         mNode;
+    tsNode& mNode;
+    tsUser  mUser;
 
     struct FeedFilter
     {

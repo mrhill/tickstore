@@ -1,7 +1,7 @@
-#include "tsNode.h"
 #include <stdexcept>
 #include <iostream>
 #include <algorithm>
+#include "tsNode.h"
 
 tsNode::tsNode(tsTracker& tracker)
   : mTracker(tracker),
@@ -85,7 +85,7 @@ void* tsNode::run()
                     mSessions.push_back(pSession);
                 }
             }
-            catch(tsSocketException& e)
+            catch(std::runtime_error& e)
             {
                 printf("%s: %s\n", __FUNCTION__, e.what());
             }

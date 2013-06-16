@@ -17,7 +17,7 @@ struct TestSendThread : public tsThread
     {
         bbU8 pwdHash[32];
         memset(pwdHash, 0, sizeof(pwdHash));
-        mTestUID = tsAuth::instance().CreateUser("testsender", pwdHash);
+        mTestUID = tsAuth::instance().CreateUser("testsender", pwdHash, tsUserPerm_TickToAll);
     }
 
     virtual void* run()

@@ -2,6 +2,13 @@
 #include "tsHash.h"
 #include <babel/StrBuf.h>
 
+void tsUser::Clear()
+{
+    mUID = 0;
+    mPerm = 0;
+    mFeeds.clear();
+}
+
 tsAuth* tsAuth::sInstance = NULL;
 
 tsAuth::tsAuth()
@@ -11,12 +18,12 @@ tsAuth::tsAuth()
     sInstance = this;
 }
 
-bbU64 tsAuth::Authenticate(bbU64 uid, const bbU8* pPwd)
+int tsAuth::Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user)
 {
-    return (bbU64)(bbS64)-1; // allow all feeds
+    return -1; // allow all feeds
 }
 
-bbU64 tsAuth::CreateUser(std::string name, const bbU8* pPwd)
+bbU64 tsAuth::CreateUser(std::string name, const bbU8* pPwd, bbU32 perm)
 {
     throw tsAuthException("Not implemented");
 }
@@ -38,7 +45,8 @@ void tsAuthMySQL::CreateUserTable()
                    "id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY,"
                    "pwd BINARY(32) NOT NULL DEFAULT '',"
                    "salt BINARY(32) NOT NULL DEFAULT '',"
-                   "name VARCHAR(256) NOT NULL DEFAULT '')");
+                   "name VARCHAR(256) NOT NULL DEFAULT '',"
+                   "perm INT UNSIGNED NOT NULL DEFAULT 0)");
 
     if (mysql_query(mCon, sql.GetPtr()))
         throw tsAuthException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
@@ -57,71 +65,76 @@ void tsAuthMySQL::CreateUserTable()
         printf("%s: Created feed table\n", __FUNCTION__);
 }
 
-bbU64 tsAuthMySQL::Authenticate(bbU64 uid, const bbU8* pPwd)
+int tsAuthMySQL::Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user)
 {
-    try
+    user.Clear();
+
+    tsMutexLocker lock(mMutex);
+
+    bbStrBuf sql;
+    sql.Printf("SELECT pwd,salt,perm FROM user WHERE id=%"bbI64"u", uid);
+    tsMySQLQuery q(mCon, sql.GetPtr());
+
+    // - Check if UID exists
+    MYSQL_ROW row = q.FetchRow();
+    if (!row)
     {
-        tsMutexLocker lock(mMutex);
+        printf("%s: unknown UID 0x%"bbI64"X\n", __FUNCTION__, uid);
+        return 0;
+    }
 
-        bbStrBuf sql;
-        sql.Printf("SELECT pwd,salt FROM user WHERE id=%"bbI64"u", uid);
-        tsMySQLQuery q(mCon, sql.GetPtr());
+    if (!row[0] || !row[1] || q.GetFieldLen(0)!=32 || q.GetFieldLen(1)!=32)
+        throw tsAuthException(strprintf("%s: unexpected user query result\n", __FUNCTION__));
 
-        // - Check if UID exists
-        MYSQL_ROW row = q.FetchRow();
-        if (!row)
-        {
-            printf("%s: unknown UID 0x%"bbI64"X\n", __FUNCTION__, uid);
-            return 0;
-        }
+    // - sha256 the salted input, and compare with stored result
+    tsHash hash(MHASH_SHA256);
+    hash.update(row[1], 32); // salt
+    hash.update(pPwd, 32); // input password
 
-        if (!row[0] || !row[1] || q.GetFieldLen(0)!=32 || q.GetFieldLen(1)!=32)
-            throw tsAuthException(strprintf("%s: unexpected user query result\n", __FUNCTION__));
+    if (memcmp(hash.digest(), row[0], 32))
+    {
+        printf("%s: UID 0x%"bbI64"X, password mismatch\n", __FUNCTION__, uid);
+        return 0;
+    }
 
-        // - sha256 the salted input, and compare with stored result
-        try
-        {
-            tsHash hash(MHASH_SHA256);
-            hash.update(row[1], 32); // salt
-            hash.update(pPwd, 32); // input password
+    user.mUID = uid;
+    user.mPerm = atoi(row[2]);
 
-            if (memcmp(hash.digest(), row[0], 32))
-            {
-                printf("%s: UID 0x%"bbI64"X, password mismatch\n", __FUNCTION__, uid);
-                return 0;
-            }
-        }
-        catch(const tsHashException& e)
-        {
-            throw tsAuthException(e.what());
-        }
-
+    if (user.mPerm & tsUserPerm_TickToAll)
+    {
+        printf("%s: UID 0x%"bbI64"X allowed to tick to all feeds\n", __FUNCTION__, uid);
+    }
+    else
+    {
         sql.Printf("SELECT id FROM feed WHERE uid=%"bbI64"u", uid);
-        row = q.ExecAndFetchRow(sql.GetPtr());
-        if (!row)
+        q.Exec(sql.GetPtr());
+
+        for(;;)
         {
-            printf("%s: No feeds for UID 0x%"bbI64"X\n", __FUNCTION__, uid);
-            return 0;
+            row = q.FetchRow();
+            if (!row)
+                break;
+
+            bbU64 feedID = strtoull(row[0], NULL, 10); // _strtoui64() in MSVC
+            user.mFeeds.push_back(feedID);
+            printf("%s: Allowing feed 0x%"bbI64"X for UID 0x%"bbI64"X\n", __FUNCTION__, feedID, uid);
         }
 
-        bbU64 feedID = strtoull(row[0], NULL, 10); // _strtoui64() in MSVC
-        printf("%s: Allowing feed 0x%"bbI64"X for UID 0x%"bbI64"X\n", __FUNCTION__, feedID, uid);
-        return feedID;
+        if (user.mFeeds.empty())
+            printf("%s: No feeds for UID 0x%"bbI64"X\n", __FUNCTION__, uid);
     }
-    catch(const tsMySQLException& e)
-    {
-        throw tsAuthException(e.what());
-    }
+
+    return 1;
 }
 
-bbU64 tsAuthMySQL::CreateUser(std::string name, const bbU8* pPwd)
+bbU64 tsAuthMySQL::CreateUser(std::string name, const bbU8* pPwd, bbU32 perm)
 {
     tsMutexLocker lock(mMutex);
 
-    bbStrBuf sql("INSERT INTO user (name, pwd, salt) values (\"");
+    bbStrBuf sql("INSERT INTO user (name, pwd, salt, perm) values (\"");
 
     bbStrBuf escaped;
-    if (!escaped.SetLen(name.size()*2))
+    if (!escaped.SetLen(name.size() << 1))
         throw tsAuthException(strprintf("%s: out of memory\n", __FUNCTION__));
     mysql_escape_string(escaped.GetPtr(), name.c_str(), name.size());
 
@@ -148,7 +161,8 @@ bbU64 tsAuthMySQL::CreateUser(std::string name, const bbU8* pPwd)
 
     mysql_real_escape_string(mCon, escaped.GetPtr(), pSalt, 32);
     sql += escaped.GetPtr();
-    sql += "\")";
+
+    sql.Catf("\",%u)", perm);
 
     if (mysql_query(mCon, sql.GetPtr()))
         throw tsAuthException(strprintf("%s: %s\n", __FUNCTION__, mysql_error(mCon)));
