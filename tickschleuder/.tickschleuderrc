@@ -1,0 +1,11 @@
+{
+	"auth": {
+		"type": "mysql",
+		"dbname": "ticks",
+		"host": "localhost",
+		"port": 0,
+		"user": "",
+		"pass": ""
+	}
+}
+
