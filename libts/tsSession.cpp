@@ -5,6 +5,7 @@
 tsSession::tsSession(tsNode& node, int socketFD, int procID)
   : tsTickReceiver(this, socketFD),
     mNode(node),
+    mTickSendCount(0),
     mSessionID(procID)
 {
     printf("%s %d created\n", __FUNCTION__, mSessionID);
@@ -69,12 +70,22 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
     }
 }
 
+void tsSession::SendTick(tsTick& tick)
+{
+    char buf[tsTick::SERIALIZEDMAXSIZE];
+    int tickSize = tsTickFactory::serializedSize(tick);
+    tick.setCount(mTickSendCount);
+    tsTickFactory::serialize(tick, buf);
+    SendTick(buf, tickSize);
+}
+
 void tsSession::SendTick(const char* pRawTick, bbUINT tickSize)
 {
     try
     {
         if (!mSocket.send(pRawTick, tickSize, 0))
             printf("%s %d: cannot send, discarding %d bytes\n", __FUNCTION__, mSessionID, tickSize);
+        mTickSendCount++;
     }
     catch(tsSocketException& e)
     {

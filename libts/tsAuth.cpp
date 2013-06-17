@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "tsAuth.h"
 #include "tsHash.h"
 #include "tsSemaphore.h"
@@ -224,6 +225,8 @@ int tsAuthMySQL::Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user)
 
         if (user.mFeeds.empty())
             printf("%s: No feeds for UID 0x%"bbI64"X\n", __FUNCTION__, uid);
+        else
+            std::sort(user.mFeeds.begin(), user.mFeeds.end());
     }
 
     return 1;

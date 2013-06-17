@@ -12,6 +12,7 @@ class tsSession : public tsTickReceiver, protected tsTickListener
 {
     tsNode& mNode;
     tsUser  mUser;
+    bbU32   mTickSendCount;
 
     struct FeedFilter
     {
@@ -61,6 +62,9 @@ public:
     tsSession(tsNode& node, int fd, int procID);
     ~tsSession();
 
+    const tsUser& user() const { return mUser; }
+
+    void SendTick(tsTick& tick);
     void SendTick(const char* pRawTick, bbUINT tickSize);
     void SetUser(const bbU8* pUser, bbUINT bufSize);
     static int cmpSessionID(const void *p1, const void *p2);

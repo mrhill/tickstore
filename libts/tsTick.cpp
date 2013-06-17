@@ -91,6 +91,24 @@ std::string tsTickAuth::strTail() const
     return str;
 }
 
+void tsTickAuthReply::serializeTail(char* pBuf) const
+{
+    bbST64LE(pBuf, mUID); pBuf+=8;
+    *pBuf = mSuccess;
+}
+
+void tsTickAuthReply::unserializeTail(const char* pBuf)
+{
+    mUID = bbLD64LE(pBuf); pBuf+=8;
+    mSuccess = *pBuf;
+}
+
+std::string tsTickAuthReply::strTail() const
+{
+    std::string str = strprintf(",uid=0x%"bbI64"X,success=%d", mUID, mSuccess);
+    return str;
+}
+
 void tsTickSubscribe::serializeTail(char* pBuf) const
 {
     bbST64LE(pBuf, mFeedID);

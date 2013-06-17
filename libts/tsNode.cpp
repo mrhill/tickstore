@@ -40,8 +40,9 @@ void* tsNode::run()
                 break;
 
             zmq::message_t msg;
-            if (mAuthSocket.recv(&msg, ZMQ_DONTWAIT))
-                ProcessAuthMsg(msg);
+            if (!mAuthSocket.recv(&msg, ZMQ_DONTWAIT))
+                break;
+            ProcessAuthReply(msg);
         }
 
         tsSocketSet socketSet;
@@ -185,7 +186,7 @@ void tsNode::Authenticate(int sessionID, bbU64 uid, const bbU8* pPwd)
     mAuthSocket.send(msg);
 }
 
-void tsNode::ProcessAuthMsg(zmq::message_t& msg)
+void tsNode::ProcessAuthReply(zmq::message_t& msg)
 {
     size_t msgSize = msg.size();
 
@@ -194,16 +195,25 @@ void tsNode::ProcessAuthMsg(zmq::message_t& msg)
         const bbU8* d = (const bbU8*)msg.data();
         int sessionID = bbLD32LE(d);
 
+        tsSession** pSession = (tsSession**)bbBSearch(&sessionID, &mSessions.front(), mSessions.size(), sizeof(tsSession*), tsSession::cmpSessionID);
+        printf("%s: session ID %d auth succeeded, pSession: %p\n", __FUNCTION__, sessionID, pSession);
+        if (!pSession)
+            return;
+
+        tsTickAuthReply reply;
+
         if (msgSize == 4) // not authorized
         {
             printf("%s: session ID %d, auth failed\n", __FUNCTION__, sessionID);
-            return;
+        }
+        else
+        {
+            (*pSession)->SetUser(d+4, msgSize-4);
+            reply.setUID((*pSession)->user().uid());
+            reply.setSuccess(1);
         }
 
-        tsSession** pSession = (tsSession**)bbBSearch(&sessionID, &mSessions.front(), mSessions.size(), sizeof(tsSession*), tsSession::cmpSessionID);
-        printf("%s: session ID %d auth succeeded, pSession: %p\n", __FUNCTION__, sessionID, pSession);
-        if (pSession)
-            (*pSession)->SetUser(d+4, msgSize-4);
+        (*pSession)->SendTick(reply);
     }
 }
 

@@ -32,7 +32,7 @@ class tsNode : public tsTickListener
     typedef std::multimap<SubscriberKey, tsSession*> SubscriberMap;
     SubscriberMap mSubscriberMap;
 
-    void ProcessAuthMsg(zmq::message_t& msg);
+    void ProcessAuthReply(zmq::message_t& msg);
 
 public:
     tsNode(zmq::context_t& zmq, tsTracker& tracker);

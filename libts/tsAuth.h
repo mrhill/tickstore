@@ -30,6 +30,7 @@ public:
     tsUser(bbU64 uid = 0, bbU32 perm = 0) : mUID(uid), mPerm(perm) {}
     void Clear();
 
+    inline bbU64 uid() const { return mUID; }
     inline bbU32 perm() const { return mPerm; }
     inline const std::vector<bbU64>& feeds() const { return mFeeds; }
 

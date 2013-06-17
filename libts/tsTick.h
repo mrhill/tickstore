@@ -11,6 +11,7 @@ enum tsTickType
     tsTickType_None = 0,    //!< Indicating unitialized ticktype
     tsTickType_Diag,        //!< Diagnostics tick, see tsTickDiag
     tsTickType_Auth,        //!< User authentication, see tsTickAuth
+    tsTickType_AuthReply,   //!< User authentication, see tsTickAuthReply
     tsTickType_Subscribe,   //!< Feed subscription, see tsTickSubscribe
 
     tsTickTypeDomain_Finance = 0x20,
@@ -111,6 +112,29 @@ struct tsTickAuth : tsTick
     inline void setUID(bbU64 uid) { mUID = uid; }
 
     static const int tailSize = 40;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
+};
+
+struct tsTickAuthReply : tsTick
+{
+    bbU64 mUID;
+    bbU8  mSuccess;
+
+    tsTickAuthReply(bbU64 uid=0, bbU8 success=0) :
+        tsTick(tsTickType_AuthReply),
+        mUID(uid),
+        mSuccess(success)
+    {
+    }
+
+    inline bbU64 UID() const { return mUID; }
+    inline void setUID(bbU64 uid) { mUID = uid; }
+    inline bbU8 success() const { return mSuccess; }
+    inline void setSuccess(bbU64 success) { mSuccess = success; }
+
+    static const int tailSize = 9;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
