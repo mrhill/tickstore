@@ -6,7 +6,7 @@
 
 void* tsThread_run(void* arg)
 {
-    return ((tsThread*)arg)->run();
+    return ((tsThread*)arg)->run(((tsThread*)arg)->mArg);
 }
 
 tsThread::tsThread() : mCancel(0), mRunning(0)
@@ -14,8 +14,9 @@ tsThread::tsThread() : mCancel(0), mRunning(0)
     memset(&mThread, 0, sizeof(mThread));
 }
 
-void tsThread::start()
+void tsThread::start(void* arg)
 {
+    mArg = arg;
     int err = pthread_create(&mThread, NULL, tsThread_run, this);
     if (err)
         throw std::runtime_error(strprintf("%s: Error %d on pthread_create\n", __FUNCTION__, err));

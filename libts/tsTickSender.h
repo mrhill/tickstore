@@ -21,7 +21,7 @@ class tsTickSender : protected tsThread
     int         mPort;
     std::string mHostName;
 
-    virtual void* run();
+    virtual void* run(void*);
     void sendUnprotected(tsTick& tick);
     void sendDiagTick();
 

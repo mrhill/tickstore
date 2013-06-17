@@ -15,7 +15,7 @@ tsTickClient::~tsTickClient()
     tsThread::join();
 }
 
-void* tsTickClient::run()
+void* tsTickClient::run(void*)
 {
     int retry = 0;
     int retryWait = 500;

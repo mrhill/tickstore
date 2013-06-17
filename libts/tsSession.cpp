@@ -7,13 +7,12 @@ tsSession::tsSession(tsNode& node, int socketFD, int procID)
     mNode(node),
     mSessionID(procID)
 {
-    mInFilter.AddFeed(400);
-    mInFilter.AddFeed(29);
-    mInFilter.AddFeed(0x42);
+    printf("%s %d created\n", __FUNCTION__, mSessionID);
 }
 
 tsSession::~tsSession()
 {
+    printf("%s %d destroyed\n", __FUNCTION__, mSessionID);
 }
 
 void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
@@ -45,20 +44,7 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
 
         std::cout << tickAuth << std::endl;
 
-        if (tsAuth::instance().Authenticate(tickAuth.mUID, tickAuth.mPwdHash, mUser))
-        {
-            if (mUser.perm() & tsUserPerm_TickToAll)
-            {
-                mInFilter.mAllowAll = 1;
-            }
-            else
-            {
-                mInFilter.mAllowAll = 0;
-                const std::vector<bbU64> feeds = mUser.feeds();
-                for(int i=0; i<feeds.size(); i++)
-                    mInFilter.AddFeed(feeds[i]);
-            }
-        }
+        mNode.Authenticate(mSessionID, tickAuth.mUID, tickAuth.mPwdHash);
         }
         break;
 
@@ -99,5 +85,33 @@ void tsSession::SendTick(const char* pRawTick, bbUINT tickSize)
 void tsSession::SubscribeFeed(bbU64 feedID)
 {
     mNode.SubscribeFeed(feedID, 0, this);
+}
+
+void tsSession::SetUser(const bbU8* pUser, bbUINT bufSize)
+{
+    if (!mUser.unserialize(pUser, bufSize))
+        printf("%s %d: error unserializing tsUser (%d bytes)\n", __FUNCTION__, mSessionID, bufSize);
+
+    if (mUser.perm() & tsUserPerm_TickToAll)
+    {
+        mInFilter.mAllowAll = 1;
+    }
+    else
+    {
+        mInFilter.mAllowAll = 0;
+        const std::vector<bbU64> feeds = mUser.feeds();
+        for(int i=0; i<feeds.size(); i++)
+            mInFilter.AddFeed(feeds[i]);
+    }
+}
+
+int tsSession::cmpSessionID(const void *p1, const void *p2)
+{
+    const tsSession* pSession = *(const tsSession**)p2;
+    if (*(const int*)p1 < pSession->mSessionID)
+        return -1;
+    if (*(const int*)p1 > pSession->mSessionID)
+        return 1;
+    return 0;
 }
 

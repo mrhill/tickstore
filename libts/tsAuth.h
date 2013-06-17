@@ -8,6 +8,7 @@
 #include <vector>
 #include <stdexcept>
 #include "json.h"
+#include <zmq.hpp>
 
 enum tsUserPerm
 {
@@ -31,6 +32,10 @@ public:
 
     inline bbU32 perm() const { return mPerm; }
     inline const std::vector<bbU64>& feeds() const { return mFeeds; }
+
+    inline bbUINT serializedSize() const { return 8+4+4+(mFeeds.size()<<3); }
+    void serialize(bbU8* buf);
+    bool unserialize(const bbU8* buf, bbUINT bufSize);
 };
 
 class tsAuthException : public std::runtime_error
@@ -42,9 +47,10 @@ public:
 class tsAuth : protected tsThread
 {
     static tsAuth* sInstance;
-    virtual void* run();
+    zmq::context_t& mZmq;
+    virtual void* run(void*);
 public:
-    tsAuth();
+    tsAuth(zmq::context_t& zmq);
     virtual ~tsAuth();
     static inline tsAuth& instance() { return *sInstance; }
     virtual int Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user);
@@ -72,7 +78,7 @@ class tsAuthMySQL : public tsAuth
     void CreateUserTable();
 
 public:
-    tsAuthMySQL(const json_value& authConfig);
+    tsAuthMySQL(zmq::context_t& zmq, const json_value& authConfig);
     virtual ~tsAuthMySQL();
 
     virtual int Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user);

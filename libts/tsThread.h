@@ -12,17 +12,18 @@ class tsThread
     friend void* tsThread_run(void* arg);
 
     pthread_t     mThread;
+    void*         mArg;
     volatile int  mCancel;
 protected:
     int           mRunning;
 
-    virtual void* run() = 0;
+    virtual void* run(void*) = 0;
 
 public:
     tsThread();
     ~tsThread();
 
-    void start();
+    void start(void* arg = NULL);
     void join();
     inline void cancel() {  mCancel = 1; }
     inline bool testCancel() const { return mCancel != 0; }

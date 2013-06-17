@@ -1,5 +1,8 @@
+#include <iostream>
 #include "tsAuth.h"
 #include "tsHash.h"
+#include "tsSemaphore.h"
+#include "tsTick.h"
 #include <babel/StrBuf.h>
 
 void tsUser::Clear()
@@ -9,24 +12,106 @@ void tsUser::Clear()
     mFeeds.clear();
 }
 
+void tsUser::serialize(bbU8* d)
+{
+    bbST64LE(d, mUID); d+=8;
+    bbST32LE(d, mPerm); d+=4;
+    bbU32 feeds = mFeeds.size();
+    bbST32LE(d, feeds); d+=4;
+    for(bbUINT i=0; i<feeds; i++)
+    {
+        bbU64 fid = mFeeds[i];
+        bbST64LE(d, fid); d+=8;
+    }
+}
+
+bool tsUser::unserialize(const bbU8* d, bbUINT bufSize)
+{
+    if (bufSize < 16)
+        return false;
+    bbU32 feeds = bbLD32LE(d+12);
+    if (bufSize != (16+feeds*8))
+        return false;
+
+    mUID = bbLD64LE(d); d+=8;
+    mPerm = bbLD32LE(d); d+=8;
+    mFeeds.resize(feeds);
+
+    for(bbUINT i=0; i<feeds; i++)
+    {
+        mFeeds[i] = bbLD64LE(d); d+=8;
+    }
+
+    return true;
+}
+
 tsAuth* tsAuth::sInstance = NULL;
 
-tsAuth::tsAuth()
+tsAuth::tsAuth(zmq::context_t& zmq) : mZmq(zmq)
 {
     if (sInstance)
-        throw std::runtime_error("Only one tsAuth instance may be active");
+        throw std::runtime_error(strprintf("%s: only one tsAuth instance may be active", __FUNCTION__));
+
+    int major, minor, patch;
+    zmq_version(&major, &minor, &patch);
+    printf("%s: zmq version %d.%d.%d\n", __FUNCTION__, major, minor, patch);
+
+    tsSemaphore ready;
+    tsThread::start(&ready);
+    if (!ready.wait(1000))
+        throw std::runtime_error(strprintf("%s: cannot init worker thread", __FUNCTION__));
+
     sInstance = this;
-    start();
 }
 
 tsAuth::~tsAuth()
 {
-    cancel();
-    join();
+    tsThread::cancel();
+    tsThread::join();
 }
 
-void* tsAuth::run()
+void* tsAuth::run(void* arg)
 {
+    tsUser user;
+
+    try
+    {
+        zmq::socket_t socket(mZmq, ZMQ_REP);
+        socket.bind("inproc://auth");
+        ((tsSemaphore*)arg)->post();
+        do
+        {
+            zmq::message_t msg;
+            socket.recv(&msg); //xxx add timeout
+
+            if (msg.size() != 44)
+            {
+                printf("tsAuth::run: invalid message size %lu\n", msg.size());
+                continue;
+            }
+
+            const bbU8* d = (const bbU8*)msg.data();
+            bbU64 uid = bbLD64LE(d);
+            int sessionID = bbLD32LE(d + 8 + 32);
+
+            int authResult = Authenticate(uid, d + 8, user);
+
+            msg.rebuild(4 + (authResult ? user.serializedSize() : 0));
+            bbU8* p = (bbU8*)msg.data();
+            bbST32LE(p, sessionID);
+
+            if (authResult)
+                user.serialize(p + 4);
+
+            socket.send(msg);
+
+        } while (!testCancel());
+    }
+    catch(std::exception& e)
+    {
+        printf("tsAuth::run: shutting down, %s\n", e.what());
+    }
+    printf("tsAuth::run: shutting down\n");
 }
 
 int tsAuth::Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user)
@@ -41,8 +126,8 @@ bbU64 tsAuth::CreateUser(std::string name, const bbU8* pPwd, bbU32 perm)
     throw tsAuthException("Not implemented");
 }
 
-tsAuthMySQL::tsAuthMySQL(const json_value& cfg)
-  : mCon(cfg["dbname"], cfg["host"], (int)cfg["port"], cfg["user"], cfg["pass"])
+tsAuthMySQL::tsAuthMySQL(zmq::context_t& zmq, const json_value& cfg)
+  : tsAuth(zmq), mCon(cfg["dbname"], cfg["host"], (int)cfg["port"], cfg["user"], cfg["pass"])
 {
     CreateUserTable();
 }
@@ -128,7 +213,11 @@ int tsAuthMySQL::Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user)
             if (!row)
                 break;
 
-            bbU64 feedID = strtoull(row[0], NULL, 10); // _strtoui64() in MSVC
+            #ifdef _MSC_VER
+            bbU64 feedID = _strtoui64(row[0], NULL, 10);
+            #else
+            bbU64 feedID = strtoull(row[0], NULL, 10);
+            #endif
             user.mFeeds.push_back(feedID);
             printf("%s: Allowing feed 0x%"bbI64"X for UID 0x%"bbI64"X\n", __FUNCTION__, feedID, uid);
         }

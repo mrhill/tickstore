@@ -50,6 +50,7 @@ int tsTickReceiver::receiveTicks(int timeout)
             }
             break; // not enough data in q to deserialize a tick
         }
+
         mpListener->ProcessTick(pRawTick, frontSize);
         mTickQueue.pop(frontSize);
         mTicksReceived++;

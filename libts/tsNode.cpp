@@ -1,14 +1,21 @@
 #include <stdexcept>
 #include <iostream>
 #include <algorithm>
+#include <babel/algo.h>
 #include "tsNode.h"
 
-tsNode::tsNode(tsTracker& tracker)
-  : mTracker(tracker),
+tsNode::tsNode(zmq::context_t& zmq, tsTracker& tracker)
+  : mZmq(zmq),
+    mAuthSocket(zmq, ZMQ_REQ),
+    mTracker(tracker),
     mClientListen(tsSocketType_TCP),
     mPipeListen(tsSocketType_TCP),
     mNextSessionID(0)
 {
+    size_t size = sizeof(mAuthSocketFD);
+    mAuthSocket.connect("inproc://auth");
+    mAuthSocket.getsockopt(ZMQ_FD, &mAuthSocketFD, &size);
+
     mClientListen.listen(2227);
     std::cout << __FUNCTION__ << ": listening on TCP " << mClientListen.nameinfo() << std::endl;
 
@@ -24,7 +31,21 @@ void* tsNode::run()
 {
     while (true)
     {
+        for(;;)
+        {
+            int zevents = 0;
+            size_t zevents_len = sizeof(zevents);
+            mAuthSocket.getsockopt(ZMQ_EVENTS, &zevents, &zevents_len);
+            if (!(zevents & ZMQ_POLLIN))
+                break;
+
+            zmq::message_t msg;
+            if (mAuthSocket.recv(&msg, ZMQ_DONTWAIT))
+                ProcessAuthMsg(msg);
+        }
+
         tsSocketSet socketSet;
+        socketSet.addRdFD(mAuthSocketFD);
         socketSet.addRdFD(mClientListen.fd());
         socketSet.addRdFD(mPipeListen.fd());
 
@@ -150,5 +171,39 @@ void tsNode::ProcessTick(const char* pRawTick, bbUINT tickSize)
     std::pair<SubscriberMap::const_iterator,SubscriberMap::const_iterator> range = mSubscriberMap.equal_range(key);
     for (SubscriberMap::const_iterator it=range.first; it!=range.second; ++it)
         it->second->SendTick(pRawTick, tickSize);
+}
+
+void tsNode::Authenticate(int sessionID, bbU64 uid, const bbU8* pPwd)
+{
+    zmq::message_t msg(8 + 32 + 4);
+
+    bbU8* d = (bbU8*)msg.data();
+    bbST64LE(d, uid); d+=8;
+    memcpy(d, pPwd, 32); d+=32;
+    bbST32LE(d, sessionID);
+
+    mAuthSocket.send(msg);
+}
+
+void tsNode::ProcessAuthMsg(zmq::message_t& msg)
+{
+    size_t msgSize = msg.size();
+
+    if (msgSize >= 4)
+    {
+        const bbU8* d = (const bbU8*)msg.data();
+        int sessionID = bbLD32LE(d);
+
+        if (msgSize == 4) // not authorized
+        {
+            printf("%s: session ID %d, auth failed\n", __FUNCTION__, sessionID);
+            return;
+        }
+
+        tsSession** pSession = (tsSession**)bbBSearch(&sessionID, &mSessions.front(), mSessions.size(), sizeof(tsSession*), tsSession::cmpSessionID);
+        printf("%s: session ID %d auth succeeded, pSession: %p\n", __FUNCTION__, sessionID, pSession);
+        if (pSession)
+            (*pSession)->SetUser(d+4, msgSize-4);
+    }
 }
 

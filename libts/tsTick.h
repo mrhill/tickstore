@@ -3,7 +3,6 @@
 
 #include "tsObjID.h"
 #include "tsTime.h"
-#include <ostream>
 
 #pragma warning(disable: 4355)
 

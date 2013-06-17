@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <sys/timeb.h>
 
-void* tsTickSender::run()
+void* tsTickSender::run(void*)
 {
     int retryWait = 500;
 

@@ -11,7 +11,7 @@ class tsTickClient : public tsThread, public tsTickListener, public tsTickReceiv
     std::string mServerAddr;
     bbU32       mTickCount;
 
-    virtual void* run();
+    virtual void* run(void*);
 public:
     tsTickClient(const char* pQueueName, const char* pServerAddr, int port = 2227);
     ~tsTickClient();

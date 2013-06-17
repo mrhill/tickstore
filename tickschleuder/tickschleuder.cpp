@@ -10,21 +10,17 @@
 #include "tsNode.h"
 #include "tsAuth.h"
 #include "tsStore.h"
-#include "json.h"
+#include "tsJson.h"
+#include <zmq.hpp>
 
 struct TestSendThread : public tsThread
 {
-    bbU64 mTestUID;
-
-    TestSendThread(tsStore* pStore)
+    virtual void* run(void*)
     {
         bbU8 pwdHash[32];
         memset(pwdHash, 0, sizeof(pwdHash));
-        mTestUID = tsAuth::instance().CreateUser("testsender", pwdHash, tsUserPerm_TickToAll);
-    }
+        bbU64 testUID = tsAuth::instance().CreateUser("testsender", pwdHash, tsUserPerm_TickToAll);
 
-    virtual void* run()
-    {
         msleep(2000);
 
         bbU64 sym = 0xDEADDEADUL;
@@ -40,7 +36,7 @@ struct TestSendThread : public tsThread
             tsTickSender sender("tickschleuder", "localhost");
 
             tsTickAuth auth;
-            auth.setUID(mTestUID);
+            auth.setUID(testUID);
             memset(auth.mPwdHash, 0, sizeof(auth.mPwdHash));
             sender << auth;
 
@@ -50,6 +46,7 @@ struct TestSendThread : public tsThread
                 priceTick.setPrice(i);
                 priceTick.setVolume(1<<(i&63));
             }
+            msleep(2000);
         }
         catch(std::exception& e)
         {
@@ -58,50 +55,6 @@ struct TestSendThread : public tsThread
 
         return 0;
     }
-};
-
-class tsJsonTree
-{
-    json_value* mpRoot;
-public:
-    const json_value& root() const { return *mpRoot; }
-
-    tsJsonTree(json_value* root = NULL) : mpRoot(root) {}
-
-    tsJsonTree(const char* jsonFile) : mpRoot(NULL)
-    {
-        FILE* fh = fopen(jsonFile, "rb");
-        if (!fh)
-            throw std::runtime_error(strprintf("cannot open file %s", jsonFile));
-
-        fseek(fh, 0, SEEK_END);
-        long fileSize = ftell(fh);
-        fseek(fh, 0, SEEK_SET);
-
-        char* pData = (char*)malloc(fileSize);
-        if (!pData)
-        {
-            fclose(fh);
-            throw std::runtime_error(strprintf("cannot allocate %u bytes to %s", fileSize, jsonFile));
-        }
-
-        size_t numRead = fread(pData, fileSize, 1, fh);
-        fclose(fh);
-        if (numRead != 1)
-        {
-            free(pData);
-            throw std::runtime_error(strprintf("error reading config %s", jsonFile));
-        }
-
-        json_settings settings = {0};
-        char error[256] = {0};
-        mpRoot = json_parse_ex(&settings, pData, fileSize, error);
-        bbMemFree(pData);
-        if (!mpRoot)
-            throw std::runtime_error(strprintf("error parsing config %s: %s", jsonFile, error));
-    }
-
-    ~tsJsonTree() { json_value_free(mpRoot); }
 };
 
 static std::string getConfigFile(const char* appFile)
@@ -118,17 +71,17 @@ int main(int argc, char** argv)
     std::string configFile = getConfigFile(argv[0]);
     tsJsonTree config(configFile.c_str());
 
-    tsAuthMySQL auth(config.root()["auth"]);
+    zmq::context_t zmq_context(1);
+
+    tsAuthMySQL auth(zmq_context, config.root()["auth"]);
 
     tsTracker tracker;
 
     try
     {
-        std::auto_ptr<tsStore> pTickerStore(tsStore::Create(tsStoreBackend_MySQL, "ticks"));
+        tsNode node(zmq_context, tracker);
 
-        tsNode node(tracker);
-
-        TestSendThread sender(pTickerStore.get());
+        TestSendThread sender;
         if (argc > 1 && !strcmp(argv[1], "-t"))
             sender.start();
 

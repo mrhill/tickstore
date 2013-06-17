@@ -8,6 +8,7 @@
 #include "tsTickReceiver.h"
 #include <map>
 #include <list>
+#include <zmq.hpp>
 
 class tsNode : public tsTickListener
 {
@@ -17,6 +18,10 @@ class tsNode : public tsTickListener
     std::list<tsTickReceiver*> mPipeTCPConnections;
     tsVecManagedPtr<tsSession> mSessions;
 
+    zmq::socket_t    mAuthSocket;
+    int              mAuthSocketFD;
+
+    zmq::context_t&  mZmq;
     tsTracker&       mTracker;
     int              mNextSessionID;
 
@@ -27,13 +32,16 @@ class tsNode : public tsTickListener
     typedef std::multimap<SubscriberKey, tsSession*> SubscriberMap;
     SubscriberMap mSubscriberMap;
 
+    void ProcessAuthMsg(zmq::message_t& msg);
 
 public:
-    tsNode(tsTracker& tracker);
+    tsNode(zmq::context_t& zmq, tsTracker& tracker);
     ~tsNode();
     void* run();
 
     virtual void ProcessTick(const char* pRawTick, bbUINT tickSize);
+
+    void Authenticate(int sessionID, bbU64 uid, const bbU8* pPwd);
 
     void SubscribeFeed(bbU64 feedID, bbU64 queryID, tsSession* pSession);
     void UnsubscribeAllFeeds(tsSession* pSession);
