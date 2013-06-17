@@ -212,7 +212,6 @@ void tsNode::ProcessAuthReply(zmq::message_t& msg)
             reply.setUID((*pSession)->user().uid());
             reply.setSuccess(1);
         }
-
         (*pSession)->SendTick(reply);
     }
 }

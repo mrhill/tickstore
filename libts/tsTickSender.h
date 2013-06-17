@@ -29,6 +29,7 @@ public:
     tsTickSender(const char* pQueueName, const char* pHostAdr, int port = 2227);
     ~tsTickSender();
 
+    bool authenticate(bbU64 uid, const char* pPwdHash);
     void send(tsTick& tick);
     inline tsTickSender& operator<<(tsTick& tick) { send(tick); return *this; }
 };

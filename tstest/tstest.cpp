@@ -23,7 +23,8 @@ int main(int argc, char** argv)
         tsTickAuth auth;
         auth.setUID(1);
         memset(auth.mPwdHash, 0, sizeof(auth.mPwdHash));
-        sender << auth;
+        bool authResult = sender.authenticate(auth.UID(), (const char*)auth.mPwdHash);
+        printf("authenticate result for UID 0x%"bbI64"X: %d\n", auth.UID(), authResult);
 
         tsTickSubscribe subscr;
         subscr.setFeedID(0);

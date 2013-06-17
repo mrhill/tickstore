@@ -119,3 +119,36 @@ void tsTickSender::send(tsTick& tick)
         sendDiagTick();
     sendUnprotected(tick);
 }
+
+bool tsTickSender::authenticate(bbU64 uid, const char* pPwdHash)
+{
+    tsTickAuth auth;
+    auth.setUID(uid);
+    memcpy(auth.mPwdHash, pPwdHash, sizeof(auth.mPwdHash));
+    send(auth);
+
+    char buf[tsTick::SERIALIZEDMAXSIZE];
+
+    tsThread::msleep(200);//xxx
+
+    int recvSize = mSocket.recv(buf, sizeof(buf), 20000);
+    if (!recvSize)
+    {
+        printf("%s: timeout waiting for reply\n", __FUNCTION__);
+        return false; // timeout
+    }
+    else if (recvSize > tsTick::SERIALIZEDHEADSIZE) //xxx handle partial receive later
+    {
+        tsTickUnion tickUnion;
+        tsTick& tick = tickUnion;
+        tsTickFactory::unserialize(buf, &tick);
+
+        if (tick.type() == tsTickType_AuthReply)
+        {
+            tsTickAuthReply& reply = static_cast<tsTickAuthReply&>(tick);
+            return reply.success();
+        }
+    }
+    return false;
+}
+

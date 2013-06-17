@@ -132,7 +132,7 @@ struct tsTickAuthReply : tsTick
     inline bbU64 UID() const { return mUID; }
     inline void setUID(bbU64 uid) { mUID = uid; }
     inline bbU8 success() const { return mSuccess; }
-    inline void setSuccess(bbU64 success) { mSuccess = success; }
+    inline void setSuccess(bbU8 success) { mSuccess = success; }
 
     static const int tailSize = 9;
     void serializeTail(char* pBuf) const;
