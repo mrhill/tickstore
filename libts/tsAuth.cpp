@@ -16,11 +16,24 @@ tsAuth::tsAuth()
     if (sInstance)
         throw std::runtime_error("Only one tsAuth instance may be active");
     sInstance = this;
+    start();
+}
+
+tsAuth::~tsAuth()
+{
+    cancel();
+    join();
+}
+
+void* tsAuth::run()
+{
 }
 
 int tsAuth::Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user)
 {
-    return -1; // allow all feeds
+    user.mUID = uid;
+    user.mPerm = tsUserPerm_TickToAll;
+    return 1; // allow all feeds
 }
 
 bbU64 tsAuth::CreateUser(std::string name, const bbU8* pPwd, bbU32 perm)
@@ -171,5 +184,4 @@ bbU64 tsAuthMySQL::CreateUser(std::string name, const bbU8* pPwd, bbU32 perm)
     printf("%s: Created user %s with uid 0x%"bbI64"X\n", __FUNCTION__, name.c_str(), uid);
     return uid;
 }
-
 

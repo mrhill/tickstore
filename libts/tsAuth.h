@@ -3,6 +3,7 @@
 
 #include "tsMutex.h"
 #include "tsMySQL.h"
+#include "tsThread.h"
 #include <map>
 #include <vector>
 #include <stdexcept>
@@ -38,13 +39,14 @@ public:
     tsAuthException(const std::string& what_arg) : std::runtime_error(what_arg) {}
 };
 
-class tsAuth
+class tsAuth : protected tsThread
 {
     static tsAuth* sInstance;
+    virtual void* run();
 public:
     tsAuth();
+    virtual ~tsAuth();
     static inline tsAuth& instance() { return *sInstance; }
-    virtual ~tsAuth() {}
     virtual int Authenticate(bbU64 uid, const bbU8* pPwd, tsUser& user);
     virtual bbU64 CreateUser(std::string name, const bbU8* pPwd, bbU32 perm);
 };

@@ -151,3 +151,4 @@ void tsNode::ProcessTick(const char* pRawTick, bbUINT tickSize)
     for (SubscriberMap::const_iterator it=range.first; it!=range.second; ++it)
         it->second->SendTick(pRawTick, tickSize);
 }
+
