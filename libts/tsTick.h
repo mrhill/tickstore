@@ -108,6 +108,13 @@ struct tsTickAuth : tsTick
         memset(mPwdHash, 0, sizeof(mPwdHash));
     }
 
+    tsTickAuth(bbU64 uid, const bbU8* pPwdHash) :
+        tsTick(tsTickType_Auth),
+        mUID(uid)
+    {
+        memcpy(mPwdHash, pPwdHash, sizeof(mPwdHash));
+    }
+
     inline bbU64 UID() const { return mUID; }
     inline void setUID(bbU64 uid) { mUID = uid; }
 

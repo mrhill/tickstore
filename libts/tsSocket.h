@@ -41,8 +41,8 @@ struct addrinfo;
 class tsSocket
 {
     int              mSocket;   //!< Socket FD
+    tsSocketState    mState;
     bbU8             mType;     //!< tsSocketType
-    bbU8             mState;    //!< tsSocketState
     bbU8             mNonBlocking;
     struct addrinfo* mpAddrInfo;
     struct addrinfo* mpAddrBound;
@@ -54,7 +54,7 @@ public:
     ~tsSocket();
     void attachFD(int socket);
     int detachFD();
-    tsSocketState state() const { return (tsSocketState)mState; }
+    inline tsSocketState state() const { return (tsSocketState)mState; }
     inline int fd() const { return mSocket; }
     void close();
 

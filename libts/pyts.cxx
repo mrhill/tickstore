@@ -91,7 +91,7 @@ BOOST_PYTHON_MODULE(pyts)
         .def(init<const char*, int>())
         .def(init<const char*, const char*, int>())
         .def("send", &tsTickSender::send)
-        .def("authenticate", &tsTickSender::authenticate)
+        .def("setLogin", &tsTickSender::setLogin)
     ;
 }
 

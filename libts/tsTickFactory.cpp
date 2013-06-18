@@ -89,10 +89,12 @@ std::string tsTickFactory::strTail(const tsTick* pTick)
     }
 }
 
-void tsTickFactory::serialize(const tsTick& tick, char* pBuf)
+int tsTickFactory::serialize(const tsTick& tick, char* pBuf)
 {
-    pBuf += tick.serializeHead(pBuf, serializedTailSize(tick));
+    int tailSize = serializedTailSize(tick);
+    pBuf += tick.serializeHead(pBuf, tailSize);
     serializeTail(&tick, pBuf);
+    return tailSize + tsTick::SERIALIZEDHEADSIZE;
 }
 
 int tsTickFactory::unserialize(const char* pBuf, tsTick* pTick)

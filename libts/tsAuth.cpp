@@ -87,7 +87,7 @@ void* tsAuth::run(void* arg)
 
             if (msg.size() != 44)
             {
-                printf("tsAuth::run: invalid message size %lu\n", msg.size());
+                printf("tsAuth::run: invalid message size %u\n", (unsigned)msg.size());
                 continue;
             }
 

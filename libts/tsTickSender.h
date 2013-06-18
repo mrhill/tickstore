@@ -9,27 +9,30 @@
 #include "tsSocket.h"
 #include <queue>
 #include <string>
+#include <stdio.h>
 
-class tsTickSender : protected tsThread
+class tsTickSender
 {
     bbU32       mTickCount;             //!< Tick count for this sender
-    tsTickQueue mTickQueue;             //!< Tick send queue
-    tsSemaphore mTickQueueSema;
-    tsMutex     mTickQueueWriteMutex;   //!< Mutex to protect write access to mTickQueue from multiple threads
+    tsMutex     mConnectMutex;
     tsSocket    mSocket;
-    int         mLogLevel;
     int         mPort;
     std::string mHostName;
+    std::string mQueueName;
+    FILE*       mLogFD;
+    bbU64       mUID;
+    bbU8        mPwdHash[32];
 
-    virtual void* run(void*);
-    void sendUnprotected(tsTick& tick);
-    void sendDiagTick();
+    void connect();
+    void tierdown();
+    bool authenticate();
 
 public:
     tsTickSender(const char* pQueueName, const char* pHostAdr, int port = 2227);
     ~tsTickSender();
 
-    bool authenticate(bbU64 uid, const char* pPwdHash);
+    void setLogin(bbU64 uid, const char* pPwdHash);
+
     void send(tsTick& tick);
     inline tsTickSender& operator<<(tsTick& tick) { send(tick); return *this; }
 };

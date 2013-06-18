@@ -4,7 +4,7 @@ from pyts import *
 
 sender = tsTickSender()
 
-sender.authenticate(0x1, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+sender.setLogin(0x1, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
 
 tick = tsTick()
 sender.send(tick)

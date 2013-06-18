@@ -4,11 +4,81 @@
 #include <stdexcept>
 #include <sys/timeb.h>
 
-void* tsTickSender::run(void*)
+tsTickSender::tsTickSender(const char* pQueueName, const char* pHostName, int port)
+  : mTickCount(0),
+    mSocket(tsSocketType_TCP),
+    mHostName(pHostName),
+    mPort(port),
+    mLogFD(NULL),
+    mUID(0)
+{
+    memset(mPwdHash, 0, sizeof(mPwdHash));
+
+    if (pQueueName)
+    {
+        mQueueName = pQueueName;
+        mLogFD = ::fopen((mQueueName + ".q.dat").c_str(), "ab");
+    }
+}
+
+tsTickSender::~tsTickSender()
+{
+    if (mLogFD)
+        ::fclose(mLogFD);
+}
+
+void tsTickSender::setLogin(bbU64 uid, const char* pPwdHash)
+{
+    mUID = uid;
+    memcpy(mPwdHash, pPwdHash, sizeof(mPwdHash));
+}
+
+bool tsTickSender::authenticate()
+{
+    // to be called from connect()
+
+    char buf[tsTick::SERIALIZEDMAXSIZE];
+
+    tsTickAuth auth(mUID, mPwdHash);
+    int tickSize = tsTickFactory::serialize(auth, buf);
+
+    mSocket.send(buf, tickSize, -1);
+    if (mLogFD)
+        ::fwrite(buf, tickSize, 1, mLogFD);
+
+    int expected = tsTick::SERIALIZEDHEADSIZE + tsTickAuthReply::tailSize;
+    int received = 0;
+    do
+    {
+        int recvSize = mSocket.recv(buf+received, sizeof(buf)-received, 20000);
+        if (!recvSize)
+        {
+            printf("%s: timeout waiting for reply\n", __FUNCTION__);
+            return false; // timeout
+        }
+        received += recvSize;
+    } while(received < expected);
+
+    tsTickUnion tickUnion;
+    tsTick& tick = tickUnion;
+    tsTickFactory::unserialize(buf, &tick);
+
+    if (tick.type() == tsTickType_AuthReply)
+    {
+        tsTickAuthReply& reply = static_cast<tsTickAuthReply&>(tick);
+        return reply.success();
+    }
+
+    return false;
+}
+
+void tsTickSender::connect()
 {
     int retryWait = 500;
 
-    do
+    tsMutexLocker lock(mConnectMutex);
+
+    for(;;)
     {
         switch (mSocket.state())
         {
@@ -17,138 +87,77 @@ void* tsTickSender::run(void*)
                 printf("%s: connecting %s:%d...\n", __FUNCTION__, mHostName.c_str(), mPort);
                 mSocket.connect(mHostName.c_str(), mPort);
                 retryWait = 500;
+
+                if (!authenticate())
+                    throw std::runtime_error("tsTickSender login failed");
+
             } catch(tsSocketException& e) {
-                printf("%s", e.what());
+                printf("%s: %s", __FUNCTION__, e.what());
+
+                mSocket.close();
 
                 tsThread::msleep(retryWait);
                 if (retryWait < 4000)
                     retryWait <<= 1;
             }
             break;
-
         case tsSocketState_Connected:
-            if (mTickQueueSema.wait(500))
-            {
-                char* pTickSerialized;
-                int tickSize = mTickQueue.frontRaw(&pTickSerialized);
-
-                if (tickSize > 0)
-                {
-                    if (bbLD16LE(pTickSerialized) == tsTickType_Diag)
-                    {
-                        bbU64 t = tsTime::currentNs();
-                        bbST64LE(pTickSerialized+tsTick::SERIALIZEDHEADSIZE, t);
-
-                        /*if (mLogLevel)
-                        {
-                            tsTickUnion tickUnion;
-                            mTickQueue.front(&tickUnion);
-                            const tsTick* pTick = tickUnion;
-                            std::cout << pTick->str() << ' ' << ((tsTime::currentNs()-pTick->time())/1000000)  << std::endl;
-                        }*/
-                    }
-
-                    try {
-                        mSocket.send(pTickSerialized, tickSize);
-                        mTickQueue.pop();
-                    } catch(tsSocketException& e) {
-                        std::cout << e.what();
-                        printf("%s: tiering down connection\n", __FUNCTION__);
-                        mSocket.close();
-                        mTickQueueSema.post();
-                    }
-                }
-            }
-            break;
-
+            return;
         default:
             tsThread::msleep(500);
             break;
         }
-
-    } while (!testCancel() || (!mTickQueue.empty() && mSocket.state()==tsSocketState_Connected));
-
-    printf("tsTickSender::run: shutting down\n");
-
-    return NULL;
-}
-
-tsTickSender::tsTickSender(const char* pQueueName, const char* pHostName, int port)
-  : mTickCount(0), mLogLevel(2), mSocket(tsSocketType_TCP),
-    mTickQueue(pQueueName, true), mHostName(pHostName), mPort(port)
-{
-    tsThread::start();
-}
-
-tsTickSender::~tsTickSender()
-{
-    tsThread::cancel();
-    tsThread::join();
-}
-
-void tsTickSender::sendUnprotected(tsTick& tick)
-{
-    tick.setCount(mTickCount);
-
-    int retry = 0;
-    int timeout = 100;
-    while (!mTickQueue.push(tick))
-    {
-        printf("%s: queue full, retry %d\n", __FUNCTION__, ++retry);
-        tsThread::msleep(timeout);
-        if (timeout < 3200)
-            timeout <<= 1;
     }
-
-    mTickCount++;
-    mTickQueueSema.post();
 }
 
-void tsTickSender::sendDiagTick()
+void tsTickSender::tierdown()
 {
-    tsTick diag(tsTickType_Diag);
-    diag.setTime(tsTime::currentTimestamp());
-    sendUnprotected(diag);
+    tsMutexLocker lock(mConnectMutex);
+
+    if (mSocket.state() != tsSocketState_Unconnected)
+    {
+        printf("%s: tiering down connection\n", __FUNCTION__);
+        mSocket.close();
+    }
 }
 
 void tsTickSender::send(tsTick& tick)
 {
-    tsMutexLocker lock(mTickQueueWriteMutex);
+    tick.setCount(mTickCount);
 
-    if (!(mTickCount & 255))
-        sendDiagTick();
-    sendUnprotected(tick);
-}
-
-bool tsTickSender::authenticate(bbU64 uid, const char* pPwdHash)
-{
-    tsTickAuth auth;
-    auth.setUID(uid);
-    memcpy(auth.mPwdHash, pPwdHash, sizeof(auth.mPwdHash));
-    send(auth);
-
-    char buf[tsTick::SERIALIZEDMAXSIZE];
-
-    tsThread::msleep(200);//xxx
-
-    int recvSize = mSocket.recv(buf, sizeof(buf), 20000);
-    if (!recvSize)
+    for(;;)
     {
-        printf("%s: timeout waiting for reply\n", __FUNCTION__);
-        return false; // timeout
-    }
-    else if (recvSize > tsTick::SERIALIZEDHEADSIZE) //xxx handle partial receive later
-    {
-        tsTickUnion tickUnion;
-        tsTick& tick = tickUnion;
-        tsTickFactory::unserialize(buf, &tick);
+        if (mSocket.state() != tsSocketState_Connected)
+            connect();
 
-        if (tick.type() == tsTickType_AuthReply)
+        if (tick.type() == tsTickType_Diag)
+            ((tsTickDiag&)tick).setSendTime(tsTime::currentNs());
+
+        char buf[tsTick::SERIALIZEDMAXSIZE];
+        int tickSize = tsTickFactory::serialize(tick, buf);
+
+        try
         {
-            tsTickAuthReply& reply = static_cast<tsTickAuthReply&>(tick);
-            return reply.success();
+            mSocket.send(buf, tickSize, -1);
+            mTickCount++; // xxx use atomic (not so important)
+
+            if (mLogFD)
+                ::fwrite(buf, tickSize, 1, mLogFD);
+
+            if (!(mTickCount & 255))
+            {
+                tsTickDiag diag;
+                diag.setTime(tsTime::currentNs());
+                send(diag);
+            }
+
+            return;
+        }
+        catch(tsSocketException& e)
+        {
+            std::cout << e.what();
+            tierdown();
         }
     }
-    return false;
 }
 

@@ -34,7 +34,7 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
         {
         tsTickFactory::unserializeTail(pRawTick + headSize, &tick);
         tsTickDiag& tickDiag = static_cast<tsTickDiag&>(tick);
-        tickDiag.setReceiveTime(tsTime::currentTimestamp());
+        tickDiag.setReceiveTime(tsTime::currentNs());
 
         std::cout << tickDiag
                   << strprintf(" latency send %d ms, receive %d ms",

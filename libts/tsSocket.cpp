@@ -85,7 +85,7 @@ static int _inet_pton(int af, const char *src, void *dst)
 tsSocket::tsSocket(tsSocketType type) :
     mSocket(-1),
     mType((bbU8)type),
-    mState((bbU8)tsSocketState_Unconnected),
+    mState(tsSocketState_Unconnected),
     mNonBlocking(0),
     mpAddrInfo(NULL),
     mpAddrBound(NULL)
@@ -113,7 +113,7 @@ void tsSocket::close()
     }
     mpAddrBound = NULL;
     freeAddressInfo();
-    mState = (bbU8)tsSocketState_Unconnected;
+    mState = tsSocketState_Unconnected;
 }
 
 void tsSocket::freeAddressInfo()
@@ -173,10 +173,10 @@ void tsSocket::prepare(const char* pHostName, bbU16 port)
 {
     close();
 
-    mState = (bbU8)tsSocketState_HostLookup;
+    mState = tsSocketState_HostLookup;
     getAddressInfo(pHostName, port);
 
-    mState = (bbU8)tsSocketState_Connecting;
+    mState = tsSocketState_Connecting;
     mSocket = ::socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
     if (mSocket == -1) {
         close();
@@ -195,7 +195,7 @@ void tsSocket::connect()
         throw tsSocketException(strprintf("%s: Error %d connecting socket", __FUNCTION__, errno));
     }
 
-    mState = (bbU8)tsSocketState_Connected;
+    mState = tsSocketState_Connected;
 }
 
 void tsSocket::connect(const char* pHostName, bbU16 port)
@@ -208,10 +208,10 @@ void tsSocket::bind(const char* pHostName, bbU16 port)
 {
     close();
 
-    mState = (bbU8)tsSocketState_HostLookup;
+    mState = tsSocketState_HostLookup;
     getAddressInfo(pHostName, port);
 
-    mState = (bbU8)tsSocketState_Connecting;
+    mState = tsSocketState_Connecting;
     struct addrinfo* p;
 
     for(p = mpAddrInfo; p != NULL; p = p->ai_next)
@@ -240,7 +240,7 @@ void tsSocket::bind(const char* pHostName, bbU16 port)
     }
 
     mpAddrBound = p;
-    mState = (bbU8)tsSocketState_BoundState;
+    mState = tsSocketState_BoundState;
 }
 
 std::string tsSocket::nameinfo() const
@@ -273,10 +273,10 @@ std::string tsSocket::nameinfo() const
 void tsSocket::listen(bbU16 port, bbUINT backlog)
 {
     close();
-    mState = (bbU8)tsSocketState_HostLookup;
+    mState = tsSocketState_HostLookup;
     getAddressInfo(NULL, port);
 
-    mState = (bbU8)tsSocketState_Connecting;
+    mState = tsSocketState_Connecting;
     mSocket = ::socket(mpAddrInfo->ai_family, mpAddrInfo->ai_socktype, mpAddrInfo->ai_protocol);
     if (mSocket == -1) {
         close();
@@ -289,14 +289,14 @@ void tsSocket::listen(bbU16 port, bbUINT backlog)
         throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
     }
     mpAddrBound = mpAddrInfo;
-    mState = (bbU8)tsSocketState_BoundState;
+    mState = tsSocketState_BoundState;
 
     state = ::listen(mSocket, backlog);
     if (state == -1) {
         close();
         throw tsSocketException(strprintf("%s: Error %d", __FUNCTION__, errno));
     }
-    mState = (bbU8)tsSocketState_ListeningState;
+    mState = tsSocketState_ListeningState;
 }
 
 int tsSocket::accept(tsSocket* pSocket)
@@ -374,7 +374,7 @@ void tsSocket::attachFD(int socket)
 {
     close();
     mSocket = socket;
-    mState = (bbU8)(socket==-1 ? tsSocketState_Unconnected : tsSocketState_Connected);
+    mState = socket==-1 ? tsSocketState_Unconnected : tsSocketState_Connected;
 }
 
 int tsSocket::detachFD()
