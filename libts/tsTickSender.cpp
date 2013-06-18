@@ -39,6 +39,8 @@ bool tsTickSender::authenticate()
 
     char buf[tsTick::SERIALIZEDMAXSIZE];
 
+    printf("%s: authenticating with UID 0x%"bbI64"X:...\n", __FUNCTION__, mUID);
+
     tsTickAuth auth(mUID, mPwdHash);
     int tickSize = tsTickFactory::serialize(auth, buf);
 
@@ -66,6 +68,7 @@ bool tsTickSender::authenticate()
     if (tick.type() == tsTickType_AuthReply)
     {
         tsTickAuthReply& reply = static_cast<tsTickAuthReply&>(tick);
+        printf("%s: result %s\n", __FUNCTION__, reply.success() ? "OK" : "FAIL");
         return reply.success();
     }
 
