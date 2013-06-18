@@ -61,7 +61,7 @@ class tsSession : public tsTickReceiver, protected tsTickListener
 public:
     tsSession(tsNode& node, int fd, int procID);
     ~tsSession();
-
+    void close();
     const tsUser& user() const { return mUser; }
 
     void SendTick(tsTick& tick);

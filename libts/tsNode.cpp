@@ -196,23 +196,20 @@ void tsNode::ProcessAuthReply(zmq::message_t& msg)
         int sessionID = bbLD32LE(d);
 
         tsSession** pSession = (tsSession**)bbBSearch(&sessionID, &mSessions.front(), mSessions.size(), sizeof(tsSession*), tsSession::cmpSessionID);
-        printf("%s: session ID %d auth succeeded, pSession: %p\n", __FUNCTION__, sessionID, pSession);
+        printf("%s: session ID %d (pSession %p), auth success: %d\n", __FUNCTION__, sessionID, pSession, msgSize!=4);
         if (!pSession)
             return;
 
         tsTickAuthReply reply;
-
-        if (msgSize == 4) // not authorized
-        {
-            printf("%s: session ID %d, auth failed\n", __FUNCTION__, sessionID);
-        }
-        else
+        if (msgSize > 4) // authorized?
         {
             (*pSession)->SetUser(d+4, msgSize-4);
             reply.setUID((*pSession)->user().uid());
             reply.setSuccess(1);
         }
         (*pSession)->SendTick(reply);
+        if (msgSize == 4)
+            (*pSession)->close();
     }
 }
 

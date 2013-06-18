@@ -16,6 +16,12 @@ tsSession::~tsSession()
     printf("%s %d destroyed\n", __FUNCTION__, mSessionID);
 }
 
+void tsSession::close()
+{
+    mSocket.close();
+    printf("%s %d closed\n", __FUNCTION__, mSessionID);
+}
+
 void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
 {
     tsTickUnion tickUnion;
