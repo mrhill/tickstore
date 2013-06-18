@@ -62,7 +62,8 @@ public:
     tsSession(tsNode& node, int fd, int procID);
     ~tsSession();
     void close();
-    const tsUser& user() const { return mUser; }
+    inline const tsUser& user() const { return mUser; }
+    inline int sessionID() const { return mSessionID; }
 
     void SendTick(tsTick& tick);
     void SendTick(const char* pRawTick, bbUINT tickSize);

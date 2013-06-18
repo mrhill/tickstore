@@ -418,18 +418,24 @@ tsSocketSet::tsSocketSet() : mHighestFD(0), mRdIsSet(0), mWrIsSet(0)
 
 void tsSocketSet::addRdFD(int fd)
 {
-    FD_SET(fd, &mRdFds);
-    if (fd >= mHighestFD)
-        mHighestFD = fd + 1;
-    mRdIsSet = 1;
+    if (fd>=0)
+    {
+        FD_SET(fd, &mRdFds);
+        if (fd >= mHighestFD)
+            mHighestFD = fd + 1;
+        mRdIsSet = 1;
+    }
 }
 
 void tsSocketSet::addWrFD(int fd)
 {
-    FD_SET(fd, &mWrFds);
-    if (fd >= mHighestFD)
-        mHighestFD = fd + 1;
-    mWrIsSet = 1;
+    if (fd>=0)
+    {
+        FD_SET(fd, &mWrFds);
+        if (fd >= mHighestFD)
+            mHighestFD = fd + 1;
+        mWrIsSet = 1;
+    }
 }
 
 int tsSocketSet::select(int timeoutUs)

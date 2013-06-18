@@ -33,6 +33,7 @@ class tsNode : public tsTickListener
     SubscriberMap mSubscriberMap;
 
     void ProcessAuthReply(zmq::message_t& msg);
+    void DestroySession(tsSession* pSession);
 
 public:
     tsNode(zmq::context_t& zmq, tsTracker& tracker);

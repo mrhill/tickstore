@@ -27,6 +27,13 @@ tsNode::~tsNode()
 {
 }
 
+void tsNode::DestroySession(tsSession* pSession)
+{
+    printf("%s %d: closing client TCP connection with fd %d\n", __FUNCTION__, pSession->sessionID(), pSession->socketFD());
+    UnsubscribeAllFeeds(pSession);
+    delete pSession;
+}
+
 void* tsNode::run()
 {
     while (true)
@@ -53,8 +60,19 @@ void* tsNode::run()
         for(std::list<tsTickReceiver*>::const_iterator it = mPipeTCPConnections.begin(); it != mPipeTCPConnections.end(); ++it)
             socketSet.addRdFD((*it)->socketFD());
 
-        for(std::vector<tsSession*>::const_iterator it = mSessions.begin(); it != mSessions.end(); ++it)
-            socketSet.addRdFD((*it)->socketFD());
+        for(std::vector<tsSession*>::iterator it = mSessions.begin(); it != mSessions.end(); )
+        {
+            if ((*it)->socketFD() == -1)
+            {
+                DestroySession(*it);
+                it = mSessions.erase(it);
+            }
+            else
+            {
+                socketSet.addRdFD((*it)->socketFD());
+                ++it;
+            }
+        }
 
         if (socketSet.select())
         {
@@ -81,9 +99,7 @@ void* tsNode::run()
                     {
                         if (!(*it)->receiveTicks(0))
                         {
-                            printf("%s: closing client TCP connection with fd %d\n", __FUNCTION__, (*it)->socketFD());
-                            UnsubscribeAllFeeds(*it);
-                            delete *it;
+                            DestroySession(*it);
                             it = mSessions.erase(it);
                             continue;
                         }
