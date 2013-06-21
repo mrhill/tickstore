@@ -7,7 +7,7 @@ void tsUser::Clear()
     mFeeds.clear();
 }
 
-void tsUser::serialize(bbU8* d)
+void tsUser::serialize(char* d)
 {
     bbST64LE(d, mUID); d+=8;
     bbST32LE(d, mPerm); d+=4;
@@ -20,7 +20,7 @@ void tsUser::serialize(bbU8* d)
     }
 }
 
-bool tsUser::unserialize(const bbU8* d, bbUINT bufSize)
+bool tsUser::unserialize(const char* d, bbUINT bufSize)
 {
     if (bufSize < 16)
         return false;

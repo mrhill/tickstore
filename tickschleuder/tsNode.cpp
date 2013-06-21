@@ -38,49 +38,57 @@ void* tsNode::run()
 {
     while (true)
     {
-        for(;;)
+        try
         {
-            int zevents = 0;
-            size_t zevents_len = sizeof(zevents);
-            mAuthSocket.getsockopt(ZMQ_EVENTS, &zevents, &zevents_len);
-            if (!(zevents & ZMQ_POLLIN))
-                break;
-
-            char msg[tsTick::SERIALIZEDMAXSIZE];
-            int msgSize = mAuthSocket.recv(msg, sizeof(msg), ZMQ_DONTWAIT);
-            if (msgSize < tsTick::SERIALIZEDHEADSIZE)
+            for(;;)
             {
-                printf("tsNode::run: invalid control message size %d\n", msgSize);
-                break;
+                int zevents = 0;
+                size_t len = sizeof(zevents);
+                mAuthSocket.getsockopt(ZMQ_EVENTS, &zevents, &len);
+                if (!(zevents & ZMQ_POLLIN))
+                    break;
+
+                char msg[tsTick::SERIALIZEDMAXSIZE];
+                int msgSize = mAuthSocket.recv(msg, sizeof(msg), ZMQ_DONTWAIT);
+                if (msgSize < tsTick::SERIALIZEDHEADSIZE)
+                {
+                    printf("tsNode::run: invalid control message size %d\n", msgSize);
+                    break;
+                }
+
+                zmq::message_t msgMore;
+                len = sizeof(int);
+                int more = 0;
+                mAuthSocket.getsockopt(ZMQ_RCVMORE, &more, &len);
+                if (more)
+                    more = mAuthSocket.recv(&msgMore, ZMQ_DONTWAIT);
+
+                ProcessControlMsg(msg, msgSize, more>0 ? &msgMore : NULL);
             }
-            ProcessControlMsg(msg, msgSize);
-        }
 
-        tsSocketSet socketSet;
-        socketSet.addRdFD(mAuthSocketFD);
-        socketSet.addRdFD(mClientListen.fd());
-        socketSet.addRdFD(mPipeListen.fd());
+            tsSocketSet socketSet;
+            socketSet.addRdFD(mAuthSocketFD);
+            socketSet.addRdFD(mClientListen.fd());
+            socketSet.addRdFD(mPipeListen.fd());
 
-        for(std::list<tsTickReceiver*>::const_iterator it = mPipeTCPConnections.begin(); it != mPipeTCPConnections.end(); ++it)
-            socketSet.addRdFD((*it)->socketFD());
-
-        for(std::vector<tsSession*>::iterator it = mSessions.begin(); it != mSessions.end(); )
-        {
-            if ((*it)->socketFD() == -1)
-            {
-                DestroySession(*it);
-                it = mSessions.erase(it);
-            }
-            else
-            {
+            for(std::list<tsTickReceiver*>::const_iterator it = mPipeTCPConnections.begin(); it != mPipeTCPConnections.end(); ++it)
                 socketSet.addRdFD((*it)->socketFD());
-                ++it;
-            }
-        }
 
-        if (socketSet.select())
-        {
-            try
+            for(std::vector<tsSession*>::iterator it = mSessions.begin(); it != mSessions.end(); )
+            {
+                if ((*it)->socketFD() == -1)
+                {
+                    DestroySession(*it);
+                    it = mSessions.erase(it);
+                }
+                else
+                {
+                    socketSet.addRdFD((*it)->socketFD());
+                    ++it;
+                }
+            }
+
+            if (socketSet.select())
             {
                 for(std::list<tsTickReceiver*>::iterator it = mPipeTCPConnections.begin(); it != mPipeTCPConnections.end(); )
                 {
@@ -127,10 +135,10 @@ void* tsNode::run()
                     mSessions.push_back(pSession);
                 }
             }
-            catch(std::runtime_error& e)
-            {
-                printf("%s: %s\n", __FUNCTION__, e.what());
-            }
+        }
+        catch(std::exception& e)
+        {
+            printf("tsNode::run: %s\n", e.what());
         }
     }
 
@@ -208,7 +216,7 @@ void tsNode::Authenticate(int sessionID, const char* pRawAuthTick, bbUINT tickSi
     mAuthSocket.send(msg);
 }
 
-void tsNode::ProcessControlMsg(const char* pMsg, bbUINT msgSize)
+void tsNode::ProcessControlMsg(const char* pMsg, bbUINT msgSize, zmq::message_t* pMsgMore)
 {
     tsTickUnion tick;
     tsTickType tt = tsTick::unserializeHead_peekTickType(pMsg);
@@ -225,7 +233,11 @@ void tsNode::ProcessControlMsg(const char* pMsg, bbUINT msgSize)
             printf("%s: session ID %d (pSession %p), auth success: %d\n", __FUNCTION__, sessionID, pSession, authReply.success());
             if (pSession)
             {
+                if (authReply.success() && pMsgMore)
+                    (*pSession)->SetUser((const char*)pMsgMore->data(), pMsgMore->size());
+
                 (*pSession)->SendTick(authReply);
+
                 if (!authReply.success())
                     (*pSession)->close();
             }

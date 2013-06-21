@@ -32,7 +32,7 @@ class tsNode : public tsTickListener
     typedef std::multimap<SubscriberKey, tsSession*> SubscriberMap;
     SubscriberMap mSubscriberMap;
 
-    void ProcessControlMsg(const char* pMsg, bbUINT msgSize);
+    void ProcessControlMsg(const char* pMsg, bbUINT msgSize, zmq::message_t* pMsgMore);
     void DestroySession(tsSession* pSession);
 
 public:

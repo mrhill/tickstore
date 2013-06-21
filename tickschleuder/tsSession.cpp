@@ -97,7 +97,7 @@ void tsSession::SubscribeFeed(bbU64 feedID)
     mNode.SubscribeFeed(feedID, 0, this);
 }
 
-void tsSession::SetUser(const bbU8* pUser, bbUINT bufSize)
+void tsSession::SetUser(const char* pUser, bbUINT bufSize)
 {
     if (!mUser.unserialize(pUser, bufSize))
         printf("%s %d: error unserializing tsUser (%d bytes)\n", __FUNCTION__, mSessionID, bufSize);

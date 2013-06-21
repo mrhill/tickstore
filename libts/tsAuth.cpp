@@ -69,6 +69,10 @@ void* tsAuth::run(void* arg)
 
                     msgReply.rebuild(tsTickAuthReply::SERIALIZEDSIZE);
                     tsTickFactory::serialize(reply, (char*)msgReply.data());
+                    socket.send(msgReply, ZMQ_SNDMORE);
+
+                    msgReply.rebuild(user.serializedSize());
+                    user.serialize((char*)msgReply.data());
                 }
                 break;
             default:

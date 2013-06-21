@@ -29,8 +29,8 @@ public:
     inline const std::vector<bbU64>& feeds() const { return mFeeds; }
 
     inline bbUINT serializedSize() const { return 8+4+4+(mFeeds.size()<<3); }
-    void serialize(bbU8* buf);
-    bool unserialize(const bbU8* buf, bbUINT bufSize);
+    void serialize(char* buf);
+    bool unserialize(const char* buf, bbUINT bufSize);
 };
 
 #endif
