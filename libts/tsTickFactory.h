@@ -6,6 +6,11 @@
 /** Finance domain tick types, see tsTickType. */
 enum
 {
+    tsTickTypeBegin0 = tsTickTypeBegin-1,
+
+    tsTickType_AuthReply,
+    tsTickType_Subscribe,
+
     tsTickTypeDomain_Finance0 = tsTickTypeDomain_Finance-1,
 
     tsTickType_Price,
@@ -38,6 +43,56 @@ public:
     static std::string str(const tsTick& tick);
 };
 
+
+struct tsTickAuthReply : tsTick
+{
+    bbU64 mUID; // 0 if auth failed
+
+    tsTickAuthReply() :
+        mUID(0),
+    tsTick(tsTickType_AuthReply) {}
+
+    tsTickAuthReply(const tsObjID& objID) :
+        mUID(0),
+    tsTick(objID, tsTickType_AuthReply) {}
+
+    tsTickAuthReply(const tsObjID& objID, bbU64 UID) :
+        mUID(UID),
+    tsTick(objID, tsTickType_AuthReply) {}
+
+    inline void setUID(bbU64 UID) { mUID = UID; }
+    inline bbU64 UID() const { return mUID; }
+
+    static const int tailSize = 8;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
+};
+
+struct tsTickSubscribe : tsTick
+{
+    bbU64 mFeedID;
+
+    tsTickSubscribe() :
+        mFeedID(0),
+    tsTick(tsTickType_Subscribe) {}
+
+    tsTickSubscribe(const tsObjID& objID) :
+        mFeedID(0),
+    tsTick(objID, tsTickType_Subscribe) {}
+
+    tsTickSubscribe(const tsObjID& objID, bbU64 feedID) :
+        mFeedID(feedID),
+    tsTick(objID, tsTickType_Subscribe) {}
+
+    inline void setFeedID(bbU64 feedID) { mFeedID = feedID; }
+    inline bbU64 feedID() const { return mFeedID; }
+
+    static const int tailSize = 8;
+    void serializeTail(char* pBuf) const;
+    void unserializeTail(const char* pBuf);
+    std::string strTail() const;
+};
 
 struct tsTickPrice : tsTick
 {

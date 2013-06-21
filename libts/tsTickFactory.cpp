@@ -116,6 +116,42 @@ std::string tsTickFactory::str(const tsTick& tick)
 }
 
 
+void tsTickAuthReply::serializeTail(char* pBuf) const
+{
+    bbST64LE(pBuf, mUID); pBuf+=8;
+}
+
+void tsTickAuthReply::unserializeTail(const char* pBuf)
+{
+    mUID = bbLD64LE(pBuf); pBuf+=8;
+}
+
+std::string tsTickAuthReply::strTail() const
+{
+    bbStrBuf str;
+    str.Printf(bbT(",UID=%"bbI64"u"), mUID);
+    return std::string(str.GetPtr());
+}
+
+
+void tsTickSubscribe::serializeTail(char* pBuf) const
+{
+    bbST64LE(pBuf, mFeedID); pBuf+=8;
+}
+
+void tsTickSubscribe::unserializeTail(const char* pBuf)
+{
+    mFeedID = bbLD64LE(pBuf); pBuf+=8;
+}
+
+std::string tsTickSubscribe::strTail() const
+{
+    bbStrBuf str;
+    str.Printf(bbT(",feedID=%"bbI64"u"), mFeedID);
+    return std::string(str.GetPtr());
+}
+
+
 void tsTickPrice::serializeTail(char* pBuf) const
 {
     union { bbU32 u32; float f32; bbU64 u64; double f64; };

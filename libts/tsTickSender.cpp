@@ -68,8 +68,8 @@ bool tsTickSender::authenticate()
     if (tick.type() == tsTickType_AuthReply)
     {
         tsTickAuthReply& reply = static_cast<tsTickAuthReply&>(tick);
-        printf("%s: result %s\n", __FUNCTION__, reply.success() ? "OK" : "FAIL");
-        return reply.success();
+        printf("%s: result %s\n", __FUNCTION__, reply.UID()==mUID ? "OK" : "FAIL");
+        return reply.UID()==mUID;
     }
 
     return false;

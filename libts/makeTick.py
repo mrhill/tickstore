@@ -3,6 +3,14 @@ from string import Template
 
 tickTypes = [
 
+	'tsTickTypeBegin',
+
+    {'name': 'AuthReply', 'scheme':
+        """bbU64  UID // 0 if auth failed""" },
+
+    {'name': 'Subscribe', 'scheme':
+        """bbU64  feedID""" },
+
     'tsTickTypeDomain_Finance',
 
     {'name': 'Price', 'scheme':
@@ -65,10 +73,15 @@ typeMap = {
 }
 
 def getAttrList(str):
-    ret = []
-    for i in str.split("\n"):
-        ret.append(i.split(None, 1))
-    return ret
+	ret = []
+	for i in str.split("\n"):
+		tupel = i.split(None, 2)
+		if len(tupel)<3:
+			tupel.append('')
+		else:
+			tupel[2]=' '+tupel[2]
+		ret.append(tupel)
+	return ret
 
 tickClassTempl = """
 struct tsTick$name : tsTick
@@ -149,9 +162,9 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 
 		classDict = dict(name=name, initParams='', members='', initializers0='', initializers='', accessors='')
 		tailSize = 0
-		for (attrType, attrName) in scheme:
+		for (attrType, attrName, attrComment) in scheme:
 		    attrMemberName = 'm'+attrName[0].upper()+attrName[1:]
-		    classDict['members']      += "    %s %s;\n" % (attrType, attrMemberName)
+		    classDict['members']      += "    %s %s;%s\n" % (attrType, attrMemberName, attrComment)
 		    classDict['initParams']   += ", %s %s" % (attrType, attrName)
 		    classDict['initializers'] += "        %s(%s),\n" % (attrMemberName, attrName)
 		    classDict['initializers0']+= "        %s(0),\n" % (attrMemberName)
@@ -175,7 +188,7 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 		factoryStrTail += "    case tsTickType_%s: return static_cast<const tsTick%s*>(pTick)->strTail();\n" % (name, name)
 
 		classImplDict = dict(name=name, attrFmt='', attrVar='', serializeTail='', serializeTailUnion='', unserializeHead='')
-		for (attrType, attrName) in scheme:
+		for (attrType, attrName, attrComment) in scheme:
 		    attrMemberName = 'm'+attrName[0].upper()+attrName[1:]
 		    classImplDict['attrFmt'] += ",%s=%s" % (attrName, typeMap[attrType][2])
 		    classImplDict['attrVar'] += ", %s" % (attrMemberName)
@@ -207,7 +220,7 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 		# Generate .cxx python wrapper for this tick type
 
 		pyClassImplDict = dict(name=name, pyAccessors='', initParams='')
-		for (attrType, attrName) in scheme:
+		for (attrType, attrName, attrComment) in scheme:
 		    attrGet = attrName
 		    attrSet = 'set'+attrName[0].upper()+attrName[1:]
 		    pyClassImplDict['pyAccessors'] += '        .add_property("%s", &tsTick%s::%s, &tsTick%s::%s)\n' % (attrName, name, attrGet, name, attrSet)

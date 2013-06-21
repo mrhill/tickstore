@@ -1,4 +1,16 @@
 
+    class_<tsTickAuthReply, bases<tsTick> >("tsTickAuthReply")
+        .def(init<const tsObjID&>())
+        .def(init<const tsObjID&,bbU64>())
+        .add_property("UID", &tsTickAuthReply::UID, &tsTickAuthReply::setUID)
+    ;
+
+    class_<tsTickSubscribe, bases<tsTick> >("tsTickSubscribe")
+        .def(init<const tsObjID&>())
+        .def(init<const tsObjID&,bbU64>())
+        .add_property("feedID", &tsTickSubscribe::feedID, &tsTickSubscribe::setFeedID)
+    ;
+
     class_<tsTickPrice, bases<tsTick> >("tsTickPrice")
         .def(init<const tsObjID&>())
         .def(init<const tsObjID&,double,bbU32>())

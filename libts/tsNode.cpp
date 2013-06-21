@@ -221,7 +221,6 @@ void tsNode::ProcessAuthReply(zmq::message_t& msg)
         {
             (*pSession)->SetUser(d+4, msgSize-4);
             reply.setUID((*pSession)->user().uid());
-            reply.setSuccess(1);
         }
         (*pSession)->SendTick(reply);
         if (msgSize == 4)
