@@ -6,7 +6,8 @@ tickTypes = [
 	'tsTickTypeBegin',
 
     {'name': 'AuthReply', 'scheme':
-        """bbU64  UID // 0 if auth failed""" },
+        """bbU64  UID
+           bbU32  success""" },
 
     {'name': 'Subscribe', 'scheme':
         """bbU64  feedID""" },

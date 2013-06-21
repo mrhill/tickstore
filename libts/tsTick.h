@@ -134,7 +134,7 @@ union tsTickUnion
 
 #include "tsTickFactory.h"
 
-inline std::ostream& operator<<(std::ostream& os, const tsTick& tick) { os<<tick.str(); return os; }
+inline std::ostream& operator<<(std::ostream& os, const tsTick& tick) { os << tsTickFactory::str(tick); return os; }
 
 #endif
 

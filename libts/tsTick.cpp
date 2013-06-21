@@ -3,17 +3,17 @@
 
 std::string tsObjID::str() const
 {
-    return strprintf("feed=0x%08X%08X,sym=0x%08X%08X", (bbU32)(feedID()>>32), (bbU32)feedID(), (bbU32)(symbolID()>>32), (bbU32)symbolID());
+    return strprintf("feed=0x%"bbI64"X,sym=0x%"bbI64"X", feedID(), symbolID());
 }
 
 std::string tsTick::str() const
 {
     tsTime time(mTime);
-    return strprintf("tt=%d,feed=0x%08X%08X,sym=0x%08X%08X,q=0x%08X%08X,count=%u,time=%s",
+    return strprintf("tt=%d,feed=0x%"bbI64"X,sym=0x%"bbI64"X,q=0x%"bbI64"X,count=%u,time=%s",
                      (int)mType,
-                     (bbU32)(mObjID.feedID()>>32), (bbU32)mObjID.feedID(),
-                     (bbU32)(mObjID.symbolID()>>32), (bbU32)mObjID.symbolID(),
-                     (bbU32)(queryID()>>32), (bbU32)queryID(),
+                     mObjID.feedID(),
+                     mObjID.symbolID(),
+                     queryID(),
                      mCount,
                      time.str().c_str());
 }
