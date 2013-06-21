@@ -7,8 +7,8 @@ int tsTickFactory::serializedTailSize(const tsTick& tick)
 {
     switch(tick.mType)
     {
-    case tsTickType_Diag: return tsTickDiag::tailSize;
-    case tsTickType_Auth: return tsTickAuth::tailSize;
+    case tsTickType_Diag: return tsTickDiag::TAILSIZE;
+    case tsTickType_Auth: return tsTickAuth::TAILSIZE;
 $factoryTailSize
     default: return 0;
     }

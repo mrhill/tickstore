@@ -46,10 +46,14 @@ void* tsNode::run()
             if (!(zevents & ZMQ_POLLIN))
                 break;
 
-            zmq::message_t msg;
-            if (!mAuthSocket.recv(&msg, ZMQ_DONTWAIT))
+            char msg[tsTick::SERIALIZEDMAXSIZE];
+            int msgSize = mAuthSocket.recv(msg, sizeof(msg), ZMQ_DONTWAIT);
+            if (msgSize < tsTick::SERIALIZEDHEADSIZE)
+            {
+                printf("tsNode::run: invalid control message size %d\n", msgSize);
                 break;
-            ProcessAuthReply(msg);
+            }
+            ProcessControlMsg(msg, msgSize);
         }
 
         tsSocketSet socketSet;
@@ -190,41 +194,46 @@ void tsNode::ProcessTick(const char* pRawTick, bbUINT tickSize)
         it->second->SendTick(pRawTick, tickSize);
 }
 
-void tsNode::Authenticate(int sessionID, bbU64 uid, const bbU8* pPwd)
+void tsNode::Authenticate(int sessionID, const char* pRawAuthTick, bbUINT tickSize)
 {
-    zmq::message_t msg(8 + 32 + 4);
+    if (tsTick::unserializeHead_peekTickType(pRawAuthTick) != tsTickType_Auth)
+        throw std::runtime_error("tsNode::Authenticate expected tsTickType_Auth");
 
-    bbU8* d = (bbU8*)msg.data();
-    bbST64LE(d, uid); d+=8;
-    memcpy(d, pPwd, 32); d+=32;
-    bbST32LE(d, sessionID);
+    zmq::message_t msg(tickSize);
+
+    char* d = (char*)msg.data();
+    memcpy(d, pRawAuthTick, tickSize);
+    tsTick::serializeHead_pokeQueryID(d, sessionID);
 
     mAuthSocket.send(msg);
 }
 
-void tsNode::ProcessAuthReply(zmq::message_t& msg)
+void tsNode::ProcessControlMsg(const char* pMsg, bbUINT msgSize)
 {
-    size_t msgSize = msg.size();
-
-    if (msgSize >= 4)
+    tsTickUnion tick;
+    tsTickType tt = tsTick::unserializeHead_peekTickType(pMsg);
+    switch(tt)
     {
-        const bbU8* d = (const bbU8*)msg.data();
-        int sessionID = bbLD32LE(d);
-
-        tsSession** pSession = (tsSession**)bbBSearch(&sessionID, &mSessions.front(), mSessions.size(), sizeof(tsSession*), tsSession::cmpSessionID);
-        printf("%s: session ID %d (pSession %p), auth success: %d\n", __FUNCTION__, sessionID, pSession, msgSize!=4);
-        if (!pSession)
-            return;
-
-        tsTickAuthReply reply;
-        if (msgSize > 4) // authorized?
+    case tsTickType_AuthReply:
         {
-            (*pSession)->SetUser(d+4, msgSize-4);
-            reply.setUID((*pSession)->user().uid());
+            tsTickFactory::unserialize(pMsg, &tick);
+            tsTickAuthReply& authReply = static_cast<tsTickAuthReply&>((tsTick&)tick);
+
+            int sessionID = (int)authReply.queryID();
+
+            tsSession** pSession = (tsSession**)bbBSearch(&sessionID, &mSessions.front(), mSessions.size(), sizeof(tsSession*), tsSession::cmpSessionID);
+            printf("%s: session ID %d (pSession %p), auth success: %d\n", __FUNCTION__, sessionID, pSession, authReply.success());
+            if (pSession)
+            {
+                (*pSession)->SendTick(authReply);
+                if (!authReply.success())
+                    (*pSession)->close();
+            }
         }
-        (*pSession)->SendTick(reply);
-        if (msgSize == 4)
-            (*pSession)->close();
+        break;
+    default:
+        printf("%s: invalid tick type %d\n", __FUNCTION__, tt);
+        break;
     }
 }
 

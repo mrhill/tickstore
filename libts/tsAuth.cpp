@@ -74,37 +74,49 @@ tsAuth::~tsAuth()
 void* tsAuth::run(void* arg)
 {
     tsUser user;
+    tsTickUnion tick;
+    zmq::message_t msgReply;
 
     try
     {
         zmq::socket_t socket(mZmq, ZMQ_REP);
         socket.bind("inproc://auth");
         ((tsSemaphore*)arg)->post();
+
         do
         {
-            zmq::message_t msg;
-            socket.recv(&msg); //xxx add timeout
+            char msg[tsTick::SERIALIZEDMAXSIZE];
+            int msgSize = socket.recv(msg, sizeof(msg)); //xxx add timeout
 
-            if (msg.size() != 44)
+            if (msgSize < tsTick::SERIALIZEDHEADSIZE)
             {
-                printf("tsAuth::run: invalid message size %u\n", (unsigned)msg.size());
+                printf("tsAuth::run: invalid message size %d\n", msgSize);
                 continue;
             }
 
-            const bbU8* d = (const bbU8*)msg.data();
-            bbU64 uid = bbLD64LE(d);
-            int sessionID = bbLD32LE(d + 8 + 32);
+            tsTickType tt = tsTick::unserializeHead_peekTickType(msg);
+            switch(tt)
+            {
+            case tsTickType_Auth:
+                {
+                    tsTickFactory::unserialize(msg, &tick);
+                    tsTickAuth& auth = static_cast<tsTickAuth&>((tsTick&)tick);
 
-            int authResult = Authenticate(uid, d + 8, user);
+                    int authResult = Authenticate(auth.UID(), auth.mPwdHash, user);
 
-            msg.rebuild(4 + (authResult ? user.serializedSize() : 0));
-            bbU8* p = (bbU8*)msg.data();
-            bbST32LE(p, sessionID);
+                    tsTickAuthReply reply(auth.objID(), auth.UID(), authResult);
+                    reply.setQueryID(auth.queryID()); // session ID
 
-            if (authResult)
-                user.serialize(p + 4);
+                    msgReply.rebuild(tsTickAuthReply::SERIALIZEDSIZE);
+                    tsTickFactory::serialize(reply, (char*)msgReply.data());
+                }
+                break;
+            default:
+                printf("tsAuth::run: invalid tick type %d\n", tt);
+                continue;
+            }
 
-            socket.send(msg);
+            socket.send(msgReply);
 
         } while (!testCancel());
     }

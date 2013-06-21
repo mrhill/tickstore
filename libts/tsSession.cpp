@@ -45,14 +45,7 @@ void tsSession::ProcessTick(const char* pRawTick, bbUINT tickSize)
         break;
 
     case tsTickType_Auth:
-        {
-        tsTickFactory::unserializeTail(pRawTick + headSize, &tick);
-        tsTickAuth& tickAuth = static_cast<tsTickAuth&>(tick);
-
-        std::cout << tickAuth << std::endl;
-
-        mNode.Authenticate(mSessionID, tickAuth.mUID, tickAuth.mPwdHash);
-        }
+        mNode.Authenticate(mSessionID, pRawTick, tickSize);
         break;
 
     case tsTickType_Subscribe:

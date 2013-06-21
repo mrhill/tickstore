@@ -98,7 +98,8 @@ $initializers0    tsTick(objID, tsTickType_$name) {}
 $initializers    tsTick(objID, tsTickType_$name) {}
 $accessors
 
-    static const int tailSize = $tailSize;
+    static const int TAILSIZE = $tailSize;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -183,7 +184,7 @@ def makeTicks(tickTypes, headerTempl, cppTempl):
 
 		# Generate .cpp for this tick type
 
-		factoryTailSize += "    case tsTickType_%s: return tsTick%s::tailSize;\n" % (name, name)
+		factoryTailSize += "    case tsTickType_%s: return tsTick%s::TAILSIZE;\n" % (name, name)
 		factorySerializeTail += "    case tsTickType_%s: static_cast<const tsTick%s*>(pTick)->serializeTail(pBuf); break;\n" % (name, name)
 		factoryUnserializeTail += "    case tsTickType_%s: static_cast<tsTick%s*>(pTick)->unserializeTail(pBuf); break;\n" % (name, name)
 		factoryStrTail += "    case tsTickType_%s: return static_cast<const tsTick%s*>(pTick)->strTail();\n" % (name, name)

@@ -46,24 +46,31 @@ public:
 
 struct tsTickAuthReply : tsTick
 {
-    bbU64 mUID; // 0 if auth failed
+    bbU64 mUID;
+    bbU32 mSuccess;
 
     tsTickAuthReply() :
         mUID(0),
+        mSuccess(0),
     tsTick(tsTickType_AuthReply) {}
 
     tsTickAuthReply(const tsObjID& objID) :
         mUID(0),
+        mSuccess(0),
     tsTick(objID, tsTickType_AuthReply) {}
 
-    tsTickAuthReply(const tsObjID& objID, bbU64 UID) :
+    tsTickAuthReply(const tsObjID& objID, bbU64 UID, bbU32 success) :
         mUID(UID),
+        mSuccess(success),
     tsTick(objID, tsTickType_AuthReply) {}
 
     inline void setUID(bbU64 UID) { mUID = UID; }
     inline bbU64 UID() const { return mUID; }
+    inline void setSuccess(bbU32 success) { mSuccess = success; }
+    inline bbU32 success() const { return mSuccess; }
 
-    static const int tailSize = 8;
+    static const int TAILSIZE = 12;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -88,7 +95,8 @@ struct tsTickSubscribe : tsTick
     inline void setFeedID(bbU64 feedID) { mFeedID = feedID; }
     inline bbU64 feedID() const { return mFeedID; }
 
-    static const int tailSize = 8;
+    static const int TAILSIZE = 8;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -119,7 +127,8 @@ struct tsTickPrice : tsTick
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
-    static const int tailSize = 12;
+    static const int TAILSIZE = 12;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -150,7 +159,8 @@ struct tsTickVolume : tsTick
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
-    static const int tailSize = 12;
+    static const int TAILSIZE = 12;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -187,7 +197,8 @@ struct tsTickPriceVolume : tsTick
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
-    static const int tailSize = 20;
+    static const int TAILSIZE = 20;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -224,7 +235,8 @@ struct tsTickBid : tsTick
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
-    static const int tailSize = 20;
+    static const int TAILSIZE = 20;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -261,7 +273,8 @@ struct tsTickAsk : tsTick
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
-    static const int tailSize = 20;
+    static const int TAILSIZE = 20;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -298,7 +311,8 @@ struct tsTickBidAsk : tsTick
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
-    static const int tailSize = 20;
+    static const int TAILSIZE = 20;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -359,7 +373,8 @@ struct tsTickRecap : tsTick
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
-    static const int tailSize = 52;
+    static const int TAILSIZE = 52;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -390,7 +405,8 @@ struct tsTickS32 : tsTick
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
-    static const int tailSize = 8;
+    static const int TAILSIZE = 8;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -421,7 +437,8 @@ struct tsTickF64 : tsTick
     inline void setOpt(bbU32 opt) { mOpt = opt; }
     inline bbU32 opt() const { return mOpt; }
 
-    static const int tailSize = 12;
+    static const int TAILSIZE = 12;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;

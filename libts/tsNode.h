@@ -32,7 +32,7 @@ class tsNode : public tsTickListener
     typedef std::multimap<SubscriberKey, tsSession*> SubscriberMap;
     SubscriberMap mSubscriberMap;
 
-    void ProcessAuthReply(zmq::message_t& msg);
+    void ProcessControlMsg(const char* pMsg, bbUINT msgSize);
     void DestroySession(tsSession* pSession);
 
 public:
@@ -42,7 +42,7 @@ public:
 
     virtual void ProcessTick(const char* pRawTick, bbUINT tickSize);
 
-    void Authenticate(int sessionID, bbU64 uid, const bbU8* pPwd);
+    void Authenticate(int sessionID, const char* pRawAuthTick, bbUINT tickSize);
 
     void SubscribeFeed(bbU64 feedID, bbU64 queryID, tsSession* pSession);
     void UnsubscribeAllFeeds(tsSession* pSession);

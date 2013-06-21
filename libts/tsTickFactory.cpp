@@ -7,19 +7,19 @@ int tsTickFactory::serializedTailSize(const tsTick& tick)
 {
     switch(tick.mType)
     {
-    case tsTickType_Diag: return tsTickDiag::tailSize;
-    case tsTickType_Auth: return tsTickAuth::tailSize;
-    case tsTickType_AuthReply: return tsTickAuthReply::tailSize;
-    case tsTickType_Subscribe: return tsTickSubscribe::tailSize;
-    case tsTickType_Price: return tsTickPrice::tailSize;
-    case tsTickType_Volume: return tsTickVolume::tailSize;
-    case tsTickType_PriceVolume: return tsTickPriceVolume::tailSize;
-    case tsTickType_Bid: return tsTickBid::tailSize;
-    case tsTickType_Ask: return tsTickAsk::tailSize;
-    case tsTickType_BidAsk: return tsTickBidAsk::tailSize;
-    case tsTickType_Recap: return tsTickRecap::tailSize;
-    case tsTickType_S32: return tsTickS32::tailSize;
-    case tsTickType_F64: return tsTickF64::tailSize;
+    case tsTickType_Diag: return tsTickDiag::TAILSIZE;
+    case tsTickType_Auth: return tsTickAuth::TAILSIZE;
+    case tsTickType_AuthReply: return tsTickAuthReply::TAILSIZE;
+    case tsTickType_Subscribe: return tsTickSubscribe::TAILSIZE;
+    case tsTickType_Price: return tsTickPrice::TAILSIZE;
+    case tsTickType_Volume: return tsTickVolume::TAILSIZE;
+    case tsTickType_PriceVolume: return tsTickPriceVolume::TAILSIZE;
+    case tsTickType_Bid: return tsTickBid::TAILSIZE;
+    case tsTickType_Ask: return tsTickAsk::TAILSIZE;
+    case tsTickType_BidAsk: return tsTickBidAsk::TAILSIZE;
+    case tsTickType_Recap: return tsTickRecap::TAILSIZE;
+    case tsTickType_S32: return tsTickS32::TAILSIZE;
+    case tsTickType_F64: return tsTickF64::TAILSIZE;
 
     default: return 0;
     }
@@ -119,17 +119,19 @@ std::string tsTickFactory::str(const tsTick& tick)
 void tsTickAuthReply::serializeTail(char* pBuf) const
 {
     bbST64LE(pBuf, mUID); pBuf+=8;
+    bbST32LE(pBuf, mSuccess); pBuf+=4;
 }
 
 void tsTickAuthReply::unserializeTail(const char* pBuf)
 {
     mUID = bbLD64LE(pBuf); pBuf+=8;
+    mSuccess = bbLD32LE(pBuf); pBuf+=4;
 }
 
 std::string tsTickAuthReply::strTail() const
 {
     bbStrBuf str;
-    str.Printf(bbT(",UID=%"bbI64"u"), mUID);
+    str.Printf(bbT(",UID=%"bbI64"u,success=%u"), mUID, mSuccess);
     return std::string(str.GetPtr());
 }
 

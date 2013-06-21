@@ -31,9 +31,12 @@ struct tsTick
     static const int SERIALIZEDPREFIX = 2+2; // u16 type, u16 serialized size (incl. this word)
     static const int SERIALIZEDHEADSIZE = SERIALIZEDPREFIX+8+8+8+4+8; // u64 feedid, u64 symid, u64 qid, u32 count, u64 time
     static const int SERIALIZEDMAXSIZE = MAXSIZE;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE;
 
+    static inline tsTickType unserializeHead_peekTickType(const char* pBuf) { return (tsTickType)bbLD16LE(pBuf); }
     static inline bbU64 unserializeHead_peekFeedID(const char* pBuf) { return bbLD64LE(pBuf + SERIALIZEDPREFIX); }
     static inline bbU64 unserializeHead_peekQueryID(const char* pBuf) { return bbLD64LE(pBuf + SERIALIZEDPREFIX + 16); }
+    static inline void serializeHead_pokeQueryID(char* pBuf, bbU64 qid) { bbST64LE(pBuf + SERIALIZEDPREFIX + 16, qid); }
 
     tsTick(bbU16 type = tsTickType_None) : mType(type), mCount(0), mQueryID(0), mTime(0) {}
     tsTick(const tsObjID& objID, bbU16 type = tsTickType_None) : mObjID(objID), mType(type), mCount(0), mQueryID(0), mTime(0) {}
@@ -89,7 +92,8 @@ struct tsTickDiag : tsTick
     inline bbU64 storeTime() const { return mStoreTime; }
     inline void setStoreTime(bbU64 timestamp) { mStoreTime = timestamp; }
 
-    static const int tailSize = 24;
+    static const int TAILSIZE = 24;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -117,7 +121,8 @@ struct tsTickAuth : tsTick
     inline bbU64 UID() const { return mUID; }
     inline void setUID(bbU64 uid) { mUID = uid; }
 
-    static const int tailSize = 40;
+    static const int TAILSIZE = 40;
+    static const int SERIALIZEDSIZE = SERIALIZEDHEADSIZE + TAILSIZE;
     void serializeTail(char* pBuf) const;
     void unserializeTail(const char* pBuf);
     std::string strTail() const;
@@ -128,8 +133,10 @@ union tsTickUnion
 {
     bbU8 mTick[tsTick::MAXSIZE];
 
-    operator const tsTick&() const { return *(const tsTick*)this; }
-    operator tsTick&() { return *(tsTick*)this; }
+    inline operator const tsTick&() const { return *(const tsTick*)this; }
+    inline operator tsTick&() { return *(tsTick*)this; }
+    inline tsTick* operator&() { return (tsTick*)this; }
+    inline const tsTick* operator&() const { return (const tsTick*)this; }
 };
 
 #include "tsTickFactory.h"

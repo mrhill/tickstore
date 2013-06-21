@@ -1,8 +1,9 @@
 
     class_<tsTickAuthReply, bases<tsTick> >("tsTickAuthReply")
         .def(init<const tsObjID&>())
-        .def(init<const tsObjID&,bbU64>())
+        .def(init<const tsObjID&,bbU64,bbU32>())
         .add_property("UID", &tsTickAuthReply::UID, &tsTickAuthReply::setUID)
+        .add_property("success", &tsTickAuthReply::success, &tsTickAuthReply::setSuccess)
     ;
 
     class_<tsTickSubscribe, bases<tsTick> >("tsTickSubscribe")

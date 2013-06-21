@@ -48,7 +48,7 @@ bool tsTickSender::authenticate()
     if (mLogFD)
         ::fwrite(buf, tickSize, 1, mLogFD);
 
-    int expected = tsTick::SERIALIZEDHEADSIZE + tsTickAuthReply::tailSize;
+    int expected = tsTick::SERIALIZEDHEADSIZE + tsTickAuthReply::TAILSIZE;
     int received = 0;
     do
     {
