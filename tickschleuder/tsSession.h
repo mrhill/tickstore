@@ -3,7 +3,7 @@
 
 #include "tsdef.h"
 #include "tsTickReceiver.h"
-#include "tsAuth.h"
+#include "tsUser.h"
 #include <set>
 
 class tsNode;

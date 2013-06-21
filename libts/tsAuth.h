@@ -4,40 +4,11 @@
 #include "tsMutex.h"
 #include "tsMySQL.h"
 #include "tsThread.h"
+#include "tsUser.h"
 #include <map>
-#include <vector>
 #include <stdexcept>
 #include "json.h"
 #include <zmq.hpp>
-
-enum tsUserPerm
-{
-    tsUserPerm_TickToAll = 0x1,
-    tsUserPermCount
-};
-
-class tsUser
-{
-protected:
-    bbU64 mUID;
-    bbU32 mPerm;
-    std::vector<bbU64> mFeeds;
-
-    friend class tsAuth;
-    friend class tsAuthMySQL;
-
-public:
-    tsUser(bbU64 uid = 0, bbU32 perm = 0) : mUID(uid), mPerm(perm) {}
-    void Clear();
-
-    inline bbU64 uid() const { return mUID; }
-    inline bbU32 perm() const { return mPerm; }
-    inline const std::vector<bbU64>& feeds() const { return mFeeds; }
-
-    inline bbUINT serializedSize() const { return 8+4+4+(mFeeds.size()<<3); }
-    void serialize(bbU8* buf);
-    bool unserialize(const bbU8* buf, bbUINT bufSize);
-};
 
 class tsAuthException : public std::runtime_error
 {
